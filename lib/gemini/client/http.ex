@@ -1,6 +1,6 @@
 defmodule Gemini.Client.HTTP do
   @moduledoc """
-  Unified HTTP client for both Gemini and Vertex AI APIs using Finch.
+  Unified HTTP client for both Gemini and Vertex AI APIs using Req.
 
   Supports multiple authentication strategies and provides both
   regular and streaming request capabilities.
@@ -9,13 +9,6 @@ defmodule Gemini.Client.HTTP do
   alias Gemini.Config
   alias Gemini.Auth
   alias Gemini.Error
-
-  @doc """
-  Start the Finch pool for HTTP requests.
-  """
-  def start_link do
-    Finch.start_link(name: __MODULE__)
-  end
 
   @doc """
   Make a GET request using the configured authentication.
@@ -36,21 +29,26 @@ defmodule Gemini.Client.HTTP do
   @doc """
   Make an authenticated HTTP request.
   """
-  def request(method, path, body, auth_config, opts \\ []) do
+  def request(method, path, body, auth_config, _opts \\ []) do
     Config.validate!()
 
     case auth_config do
-      nil -> {:error, Error.config_error("No authentication configured")}
+      nil ->
+        {:error, Error.config_error("No authentication configured")}
+
       %{type: auth_type, credentials: credentials} ->
         url = build_authenticated_url(auth_type, path, credentials)
         headers = Auth.build_headers(auth_type, credentials)
-        finch_opts = [receive_timeout: Config.timeout()]
 
-        body_encoded = if body, do: Jason.encode!(body), else: nil
+        req_opts = [
+          method: method,
+          url: url,
+          headers: headers,
+          receive_timeout: Config.timeout(),
+          json: body
+        ]
 
-        method
-        |> Finch.build(url, headers, body_encoded)
-        |> Finch.request(__MODULE__, finch_opts)
+        Req.request(req_opts)
         |> handle_response()
     end
   end
@@ -66,37 +64,36 @@ defmodule Gemini.Client.HTTP do
   @doc """
   Stream a POST request with specific authentication configuration.
   """
-  def stream_post_with_auth(path, body, auth_config, opts \\ []) do
+  def stream_post_with_auth(path, body, auth_config, _opts \\ []) do
     Config.validate!()
 
     case auth_config do
-      nil -> {:error, Error.config_error("No authentication configured")}
+      nil ->
+        {:error, Error.config_error("No authentication configured")}
+
       %{type: auth_type, credentials: credentials} ->
         url = build_authenticated_url(auth_type, path, credentials)
         headers = Auth.build_headers(auth_type, credentials)
-        finch_opts = [receive_timeout: Config.timeout()]
-
-        body_encoded = Jason.encode!(body)
 
         # Add SSE parameter to URL
         sse_url = if String.contains?(url, "?"), do: "#{url}&alt=sse", else: "#{url}?alt=sse"
 
-        :post
-        |> Finch.build(sse_url, headers, body_encoded)
-        |> Finch.stream(__MODULE__, %{events: []}, fn
-          {:status, status}, acc -> {:cont, Map.put(acc, :status, status)}
-          {:headers, headers}, acc -> {:cont, Map.put(acc, :headers, headers)}
-          {:data, data}, acc ->
-            case parse_sse_chunk(data) do
-              {:ok, events} -> {:cont, Map.update(acc, :events, events, &(&1 ++ events))}
-              :error -> {:cont, acc}
-            end
-        end)
-        |> case do
-          {:ok, %{status: status, events: events}} when status in 200..299 ->
+        req_opts = [
+          url: sse_url,
+          headers: headers,
+          receive_timeout: Config.timeout(),
+          json: body,
+          into: :self
+        ]
+
+        case Req.post(req_opts) do
+          {:ok, %Req.Response{status: status, body: body}} when status in 200..299 ->
+            events = parse_sse_stream(body)
             {:ok, events}
-          {:ok, %{status: status}} ->
+
+          {:ok, %Req.Response{status: status}} ->
             {:error, Error.http_error(status, "Stream request failed")}
+
           {:error, reason} ->
             {:error, Error.network_error(reason)}
         end
@@ -106,26 +103,23 @@ defmodule Gemini.Client.HTTP do
   @doc """
   Raw streaming POST with full URL (used by streaming manager).
   """
-  def stream_post_raw(url, body, headers, opts \\ []) do
-    finch_opts = [receive_timeout: Config.timeout()]
-    body_encoded = Jason.encode!(body)
+  def stream_post_raw(url, body, headers, _opts \\ []) do
+    req_opts = [
+      url: url,
+      headers: headers,
+      receive_timeout: Config.timeout(),
+      json: body,
+      into: :self
+    ]
 
-    :post
-    |> Finch.build(url, headers, body_encoded)
-    |> Finch.stream(__MODULE__, %{events: []}, fn
-      {:status, status}, acc -> {:cont, Map.put(acc, :status, status)}
-      {:headers, headers}, acc -> {:cont, Map.put(acc, :headers, headers)}
-      {:data, data}, acc ->
-        case parse_sse_chunk(data) do
-          {:ok, events} -> {:cont, Map.update(acc, :events, events, &(&1 ++ events))}
-          :error -> {:cont, acc}
-        end
-    end)
-    |> case do
-      {:ok, %{status: status, events: events}} when status in 200..299 ->
+    case Req.post(req_opts) do
+      {:ok, %Req.Response{status: status, body: body}} when status in 200..299 ->
+        events = parse_sse_stream(body)
         {:ok, events}
-      {:ok, %{status: status}} ->
+
+      {:ok, %Req.Response{status: status}} ->
         {:error, Error.http_error(status, "Stream request failed")}
+
       {:error, reason} ->
         {:error, Error.network_error(reason)}
     end
@@ -140,7 +134,14 @@ defmodule Gemini.Client.HTTP do
     # or a general endpoint like "models" for listing
     if String.contains?(path, ":") do
       # Model-specific endpoint, use the auth strategy to build the path
-      full_path = Auth.build_path(auth_type, extract_model_from_path(path), extract_endpoint_from_path(path), credentials)
+      full_path =
+        Auth.build_path(
+          auth_type,
+          extract_model_from_path(path),
+          extract_endpoint_from_path(path),
+          credentials
+        )
+
       "#{base_url}/#{full_path}"
     else
       # General endpoint (like "models"), use path directly
@@ -153,8 +154,10 @@ defmodule Gemini.Client.HTTP do
     case String.split(path, ":") do
       [model_path, _endpoint] ->
         model_path |> String.replace_prefix("models/", "") |> String.trim_leading("/")
+
       _ ->
-        "gemini-2.0-flash" # fallback
+        # fallback
+        "gemini-2.0-flash"
     end
   end
 
@@ -162,28 +165,45 @@ defmodule Gemini.Client.HTTP do
     # Extract endpoint from paths like "models/gemini-2.0-flash:generateContent"
     case String.split(path, ":") do
       [_model, endpoint] -> String.split(endpoint, "?") |> hd()
-      _ -> "generateContent" # fallback
+      # fallback
+      _ -> "generateContent"
     end
   end
 
-  defp handle_response({:ok, %Finch.Response{status: status, body: body}}) when status in 200..299 do
-    case Jason.decode(body) do
-      {:ok, decoded} -> {:ok, decoded}
-      {:error, _} -> {:error, Error.invalid_response("Invalid JSON response")}
+  defp handle_response({:ok, %Req.Response{status: status, body: body}})
+       when status in 200..299 do
+    case body do
+      decoded when is_map(decoded) ->
+        {:ok, decoded}
+
+      json_string when is_binary(json_string) ->
+        case Jason.decode(json_string) do
+          {:ok, decoded} -> {:ok, decoded}
+          {:error, _} -> {:error, Error.invalid_response("Invalid JSON response")}
+        end
+
+      _ ->
+        {:error, Error.invalid_response("Invalid response format")}
     end
   end
 
-  defp handle_response({:ok, %Finch.Response{status: status, body: body}}) do
-    error_info = case Jason.decode(body) do
-      {:ok, %{"error" => error}} -> error
-      _ -> %{"message" => "HTTP #{status}"}
-    end
+  defp handle_response({:ok, %Req.Response{status: status, body: body}}) do
+    error_info =
+      case body do
+        %{"error" => error} ->
+          error
+
+        json_string when is_binary(json_string) ->
+          case Jason.decode(json_string) do
+            {:ok, %{"error" => error}} -> error
+            _ -> %{"message" => "HTTP #{status}"}
+          end
+
+        _ ->
+          %{"message" => "HTTP #{status}"}
+      end
 
     {:error, Error.api_error(status, error_info)}
-  end
-
-  defp handle_response({:error, %Mint.TransportError{reason: reason}}) do
-    {:error, Error.network_error(reason)}
   end
 
   defp handle_response({:error, reason}) do
@@ -191,18 +211,17 @@ defmodule Gemini.Client.HTTP do
   end
 
   # Parse Server-Sent Events format
-  defp parse_sse_chunk(data) do
-    events =
-      data
-      |> String.split("\n\n")
-      |> Enum.filter(&(String.trim(&1) != ""))
-      |> Enum.map(&parse_sse_event/1)
-      |> Enum.filter(&(&1 != nil))
-
-    {:ok, events}
+  defp parse_sse_stream(data) when is_binary(data) do
+    data
+    |> String.split("\n\n")
+    |> Enum.filter(&(String.trim(&1) != ""))
+    |> Enum.map(&parse_sse_event/1)
+    |> Enum.filter(&(&1 != nil))
   rescue
-    _ -> :error
+    _ -> []
   end
+
+  defp parse_sse_stream(_), do: []
 
   defp parse_sse_event(event_data) do
     lines = String.split(event_data, "\n")
@@ -214,8 +233,10 @@ defmodule Gemini.Client.HTTP do
             {:ok, decoded} -> Map.put(acc, :data, decoded)
             _ -> acc
           end
+
         [field, value] ->
           Map.put(acc, String.to_atom(field), value)
+
         _ ->
           acc
       end

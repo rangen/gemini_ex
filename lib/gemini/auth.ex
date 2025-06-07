@@ -8,21 +8,24 @@ defmodule Gemini.Auth do
   """
 
   @type auth_type :: :gemini | :vertex_ai
-  @type credentials :: %{
-    api_key: String.t()
-  } | %{
-    access_token: String.t(),
-    project_id: String.t(),
-    location: String.t()
-  }
+  @type credentials ::
+          %{
+            api_key: String.t()
+          }
+          | %{
+              access_token: String.t(),
+              project_id: String.t(),
+              location: String.t()
+            }
 
-  @doc """
-  Behavior for authentication strategies.
-  """
   defmodule Strategy do
+    @moduledoc """
+    Behavior for authentication strategies.
+    """
     @callback headers(credentials :: map()) :: [{String.t(), String.t()}]
     @callback base_url(credentials :: map()) :: String.t()
-    @callback build_path(model :: String.t(), endpoint :: String.t(), credentials :: map()) :: String.t()
+    @callback build_path(model :: String.t(), endpoint :: String.t(), credentials :: map()) ::
+                String.t()
     @callback refresh_credentials(credentials :: map()) :: {:ok, map()} | {:error, term()}
   end
 

@@ -7,8 +7,16 @@ defmodule Gemini.Generate do
   alias Gemini.Config
   alias Gemini.Types.{Content, Part}
   alias Gemini.Types.Request.{GenerateContentRequest, CountTokensRequest}
-  alias Gemini.Types.Response.{GenerateContentResponse, CountTokensResponse, Candidate, PromptFeedback, UsageMetadata}
-  alias Gemini.Types.{SafetySetting, GenerationConfig}
+
+  alias Gemini.Types.Response.{
+    GenerateContentResponse,
+    CountTokensResponse,
+    Candidate,
+    PromptFeedback,
+    UsageMetadata
+  }
+
+  # Note: SafetySetting and GenerationConfig aliases removed as they're not used directly
   alias Gemini.Error
 
   @doc """
@@ -114,7 +122,10 @@ defmodule Gemini.Generate do
   """
   def text(contents, opts \\ []) do
     case content(contents, opts) do
-      {:ok, %GenerateContentResponse{candidates: [%Candidate{content: %Content{parts: [%Part{text: text} | _]}} | _]}} ->
+      {:ok,
+       %GenerateContentResponse{
+         candidates: [%Candidate{content: %Content{parts: [%Part{text: text} | _]}} | _]
+       }} ->
         {:ok, text}
 
       {:ok, %GenerateContentResponse{candidates: []}} ->
@@ -176,15 +187,16 @@ defmodule Gemini.Generate do
     user_content = normalize_content(message)
     contents = chat.history ++ [user_content]
 
-    opts = [
-      model: chat.model,
-      generation_config: chat.generation_config,
-      safety_settings: chat.safety_settings,
-      system_instruction: chat.system_instruction,
-      tools: chat.tools,
-      tool_config: chat.tool_config
-    ]
-    |> Enum.filter(fn {_k, v} -> v != nil end)
+    opts =
+      [
+        model: chat.model,
+        generation_config: chat.generation_config,
+        safety_settings: chat.safety_settings,
+        system_instruction: chat.system_instruction,
+        tools: chat.tools,
+        tool_config: chat.tool_config
+      ]
+      |> Enum.filter(fn {_k, v} -> v != nil end)
 
     case content(contents, opts) do
       {:ok, response} ->
@@ -288,15 +300,17 @@ defmodule Gemini.Generate do
 
       {:ok, count_response}
     rescue
-      e -> {:error, Error.invalid_response("Failed to parse count tokens response: #{inspect(e)}")}
+      e ->
+        {:error, Error.invalid_response("Failed to parse count tokens response: #{inspect(e)}")}
     end
   end
 
   defp parse_candidate(candidate_data) do
-    content = case Map.get(candidate_data, "content") do
-      nil -> nil
-      content_data -> parse_content(content_data)
-    end
+    content =
+      case Map.get(candidate_data, "content") do
+        nil -> nil
+        content_data -> parse_content(content_data)
+      end
 
     %Candidate{
       content: content,
@@ -319,6 +333,7 @@ defmodule Gemini.Generate do
 
           Map.has_key?(part_data, "inlineData") ->
             inline_data = Map.get(part_data, "inlineData")
+
             Part.blob(
               Map.get(inline_data, "data"),
               Map.get(inline_data, "mimeType")
@@ -336,6 +351,7 @@ defmodule Gemini.Generate do
   end
 
   defp parse_prompt_feedback(nil), do: nil
+
   defp parse_prompt_feedback(feedback_data) do
     %PromptFeedback{
       block_reason: Map.get(feedback_data, "blockReason"),
@@ -344,6 +360,7 @@ defmodule Gemini.Generate do
   end
 
   defp parse_usage_metadata(nil), do: nil
+
   defp parse_usage_metadata(metadata) do
     %UsageMetadata{
       prompt_token_count: Map.get(metadata, "promptTokenCount"),
@@ -364,12 +381,15 @@ defmodule Gemini.Generate do
   end
 
   defp parse_citation_metadata(nil), do: nil
+
   defp parse_citation_metadata(_metadata) do
     # TODO: Implement citation metadata parsing
     nil
   end
 
-  defp extract_assistant_content(%GenerateContentResponse{candidates: [%Candidate{content: content} | _]}) do
+  defp extract_assistant_content(%GenerateContentResponse{
+         candidates: [%Candidate{content: content} | _]
+       }) do
     %{content | role: "model"}
   end
 

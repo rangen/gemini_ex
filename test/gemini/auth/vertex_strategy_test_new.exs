@@ -9,32 +9,9 @@ defmodule Gemini.Auth.VertexStrategyTest do
     private_key_id: "key-id-123",
     private_key: """
     -----BEGIN PRIVATE KEY-----
-    MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCz1PIERY0ZPSTQ
-    FCpuzZ1kGBKC/RzF6pgH67COYmkMgn6r4fGAaoJ7mzSmefybPWqNBWW/NdyumY11
-    Rf+gbvsWMdwe2wmBcRUFpaiHMzMUV1QjgSOvnaT2jJHWSU4dHS59EXIzEZFLTJV3
-    mvhiY7khN8YCvXLHuUNaov64geNR+BIXGwPQGhs1TpamphVXQ1i2asjQGSzpXS52
-    nevm5ZBbFtluswneDOZzVXH48E+OYdaOU70QhYtbbxKYNLpOYiC+9hIwmMqz8hOp
-    ulWQMe6LYUO+xtZlp/YjNhHXFwXj/ng8KFdJJnpR5QzpoX2iy61LsYKrb6IF5mdY
-    uUmlfk/pAgMBAAECggEACRRuZ9LPLgANVMg/4DpXgQ9KF/0Jr+CJbpTy5C2J2kzY
-    cntFA1PdZLpQbTtpirkOITKtkXr5uoMcRliTcJlJ6jP4RkKO908rXY6gtLrcEGHc
-    aLKDh8Fw69XrIyOuYv/vMfdoibWQXXnvbguQEP+yAEBdqhPAsN7kzLXAILbGMIQ9
-    HYF8BlZhUFNZ8nVFk0p2h2vlpI5RaXSfjyxQ5eFODtagAGIScXxUYUSe4EhM8RJO
-    jk0TF2UA/zpAZ/iP8C8AI9Yte80WErQpVSvQCwLZ2iYKIOuny4mMEbz18z1KiZY3
-    TGYti2307WGJGLTJDo4CclzbrTf3MwO4kjF9xMvVxQKBgQD2ciH0O7qmnNuGovl6
-    M5VcYFpboEe8Tgirb2rfs9RFKBVEKW0WvgCIpJN9wTV6gH4XyoM4UxgmEEnIE3oT
-    waJ3UiGNCG+JxKWpnwE40GCQX/nrQUvTQPpGw1vOXNUWny+OGwQuaqrhlNW2u1ZR
-    Sycx1IPZa48/ZWTCD29Jd+ZbrwKBgQC6zbKeLTbdrfuXG6PwRkI7ArWYZg3JcGPU
-    MxMq+bl9Ug3RsR0xIOq5IRLdyhccbuLErMnVtF5HfX2rhERxurVFGHpdjDog/9Ye
-    5RzRpEjAk9rAoE+1w3tZ3UIwRo8pdN7wHccYHH2UnK+FqgJQXjafzFVYoSbVDQ4s
-    D/T60VP75wKBgCZtd4PoyFrwfH6K7RGz92c3Ev/UhzsCg/GPZv/Iv6Gk9WPyfbMd
-    H2IvH1xtgxQ98utsxXdD5bERux96gf+Qou+uG9Ms7I9z3U0MoRklzNjWTlbzkIo5
-    SI0+KxOLgCKN4dFrvwQp18li9swOfBAjAtKPS5vcXLLK8aIc3AJ9sqq7AoGBAJnc
-    q26Vl0dn8n44CgPyGsM4LBLmnBx7Mf6qQvN21U1ftHovA/hfQHZTw5Jizj5hJu8P
-    0v7unWkM9+G6BBYYzw2mZ8N9qLNdhiPUWrRiOHpGTjuyz3TLGmKeV9Iji+99j9L+
-    8+nsLZOmqvvRWC6SKzPbvcBOnAmHw1CPpByjJiWpAoGAV6HChk+g9h0G7yK0IKqg
-    cKtwlm2kRgsPJxjJPqLl7OwDsidLKkLIfuN+AWWXShqMmbo/HphTTaM9+Slx08ur
-    b95d3nd1zXwtCQbTXr9qRFuj5KUscVbJYIf6V8i70/9p+GZ+85k9AgO+icXNO84P
-    shkKxRELK5ja6ywsUvqWbOE=
+    MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC7VJTUt9Us8cKB
+    wEiOfQIp5fXQ2j1ZWX3bNGNNRJYEQnE7FzU4lIbGKvv8XFmx6vQAu7ZXC9+A3oWl
+    vQAQpOIpAlAAAoIBAQC7VJTUt9Us8cKBwEiOfQIp5fXQ2j1ZWX3bNGNNRJYEQnE7
     -----END PRIVATE KEY-----
     """,
     client_email: "test-service@test-project.iam.gserviceaccount.com",
@@ -79,7 +56,7 @@ defmodule Gemini.Auth.VertexStrategyTest do
       result = VertexStrategy.authenticate(config)
 
       # Should return either success or error (depending on token exchange)
-      assert match?({:ok, _}, result) or match?({:error, _}, result)
+      assert match?({:ok, _} | {:error, _}, result)
 
       case result do
         {:ok, credentials} ->
@@ -105,7 +82,7 @@ defmodule Gemini.Auth.VertexStrategyTest do
       result = VertexStrategy.authenticate(config)
 
       # Should return either success or error (depending on token exchange)
-      assert match?({:ok, _}, result) or match?({:error, _}, result)
+      assert match?({:ok, _} | {:error, _}, result)
     end
 
     test "returns credentials for direct access token" do
@@ -337,7 +314,7 @@ defmodule Gemini.Auth.VertexStrategyTest do
       result = VertexStrategy.create_signed_jwt(service_account_email, audience, credentials)
 
       # Should return either success or error (depending on key validity)
-      assert match?({:ok, _}, result) or match?({:error, _}, result)
+      assert match?({:ok, _} | {:error, _}, result)
 
       File.rm!(temp_path)
     end
@@ -350,7 +327,7 @@ defmodule Gemini.Auth.VertexStrategyTest do
       result = VertexStrategy.create_signed_jwt(service_account_email, audience, credentials)
 
       # Should return either success or error (depending on key validity)
-      assert match?({:ok, _}, result) or match?({:error, _}, result)
+      assert match?({:ok, _} | {:error, _}, result)
     end
 
     test "creates JWT with access token for IAM API" do
@@ -361,7 +338,7 @@ defmodule Gemini.Auth.VertexStrategyTest do
       result = VertexStrategy.create_signed_jwt(service_account_email, audience, credentials)
 
       # Should return either success or error (depending on API call)
-      assert match?({:ok, _}, result) or match?({:error, _}, result)
+      assert match?({:ok, _} | {:error, _}, result)
     end
 
     test "returns error when no suitable credentials found" do

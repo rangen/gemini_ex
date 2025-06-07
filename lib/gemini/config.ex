@@ -8,9 +8,9 @@ defmodule Gemini.Config do
   """
 
   @type auth_config :: %{
-    type: :gemini | :vertex_ai,
-    credentials: map()
-  }
+          type: :gemini | :vertex_ai,
+          credentials: map()
+        }
 
   @default_model "gemini-1.5-pro-latest"
 
@@ -56,7 +56,8 @@ defmodule Gemini.Config do
     cond do
       gemini_api_key() -> :gemini
       vertex_project_id() && vertex_project_id() != "" -> :vertex
-      true -> :gemini  # default
+      # default
+      true -> :gemini
     end
   end
 
@@ -64,7 +65,8 @@ defmodule Gemini.Config do
   Detect authentication type based on configuration map.
   """
   def detect_auth_type(%{api_key: api_key, project_id: _project_id}) when not is_nil(api_key) do
-    :gemini  # gemini takes priority
+    # gemini takes priority
+    :gemini
   end
 
   def detect_auth_type(%{project_id: project_id}) when not is_nil(project_id) do
@@ -76,7 +78,8 @@ defmodule Gemini.Config do
   end
 
   def detect_auth_type(%{}) do
-    :gemini  # default
+    # default
+    :gemini
   end
 
   @doc """
@@ -107,11 +110,26 @@ defmodule Gemini.Config do
         }
 
       vertex_service_account() ->
+        service_account_path = vertex_service_account()
+
+        # Load and parse the service account file to get project_id if not provided
+        project_id =
+          case vertex_project_id() do
+            nil ->
+              case load_project_from_service_account(service_account_path) do
+                {:ok, project} -> project
+                _ -> nil
+              end
+
+            project ->
+              project
+          end
+
         %{
           type: :vertex_ai,
           credentials: %{
-            service_account_key: vertex_service_account(),
-            project_id: vertex_project_id(),
+            service_account_key: service_account_path,
+            project_id: project_id,
             location: vertex_location()
           }
         }
@@ -125,7 +143,9 @@ defmodule Gemini.Config do
               nil -> nil
               api_key -> %{type: :gemini, credentials: %{api_key: api_key}}
             end
-          config -> config
+
+          config ->
+            config
         end
     end
   end
@@ -160,10 +180,16 @@ defmodule Gemini.Config do
     case auth_config() do
       %{type: :gemini, credentials: credentials} ->
         Gemini.Auth.get_base_url(:gemini, credentials)
+
       %{type: :vertex_ai, credentials: credentials} ->
         Gemini.Auth.get_base_url(:vertex_ai, credentials)
+
       _ ->
-        Application.get_env(:gemini, :base_url, "https://generativelanguage.googleapis.com/v1beta")
+        Application.get_env(
+          :gemini,
+          :base_url,
+          "https://generativelanguage.googleapis.com/v1beta"
+        )
     end
   end
 
@@ -211,7 +237,7 @@ defmodule Gemini.Config do
   end
 
   defp vertex_service_account do
-    System.get_env("VERTEX_SERVICE_ACCOUNT")
+    System.get_env("VERTEX_SERVICE_ACCOUNT") || System.get_env("VERTEX_JSON_FILE")
   end
 
   defp vertex_project_id do
@@ -227,12 +253,30 @@ defmodule Gemini.Config do
     :ok
   end
 
-  defp validate_vertex_config!(%{service_account_key: key, project_id: project, location: location})
+  defp validate_vertex_config!(%{
+         service_account_key: key,
+         project_id: project,
+         location: location
+       })
        when is_binary(key) and is_binary(project) and is_binary(location) do
     :ok
   end
 
   defp validate_vertex_config!(credentials) do
     raise "Invalid Vertex AI configuration: #{inspect(credentials)}"
+  end
+
+  defp load_project_from_service_account(file_path) do
+    case File.read(file_path) do
+      {:ok, content} ->
+        case Jason.decode(content) do
+          {:ok, %{"project_id" => project_id}} -> {:ok, project_id}
+          {:ok, _} -> {:error, "No project_id found in service account file"}
+          {:error, reason} -> {:error, "Failed to parse JSON: #{reason}"}
+        end
+
+      {:error, reason} ->
+        {:error, "Failed to read file: #{reason}"}
+    end
   end
 end

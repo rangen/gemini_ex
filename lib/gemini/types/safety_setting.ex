@@ -6,22 +6,22 @@ defmodule Gemini.Types.SafetySetting do
   use TypedStruct
 
   @type category ::
-    :harm_category_harassment |
-    :harm_category_hate_speech |
-    :harm_category_sexually_explicit |
-    :harm_category_dangerous_content
+          :harm_category_harassment
+          | :harm_category_hate_speech
+          | :harm_category_sexually_explicit
+          | :harm_category_dangerous_content
 
   @type threshold ::
-    :harm_block_threshold_unspecified |
-    :block_low_and_above |
-    :block_medium_and_above |
-    :block_only_high |
-    :block_none
+          :harm_block_threshold_unspecified
+          | :block_low_and_above
+          | :block_medium_and_above
+          | :block_only_high
+          | :block_none
 
   @derive Jason.Encoder
   typedstruct do
-    field :category, category(), enforce: true
-    field :threshold, threshold(), enforce: true
+    field(:category, category(), enforce: true)
+    field(:threshold, threshold(), enforce: true)
   end
 
   @doc """

@@ -16,24 +16,24 @@ defmodule Gemini.Streaming.Manager do
 
   @type stream_id :: String.t()
   @type stream_state :: %{
-    stream_id: stream_id(),
-    pid: pid(),
-    auth_type: atom(),
-    credentials: map(),
-    model: String.t(),
-    endpoint: String.t(),
-    request_body: map(),
-    buffer: String.t(),
-    status: :active | :completed | :error,
-    error: term() | nil,
-    events: [map()],
-    subscribers: [pid()]
-  }
+          stream_id: stream_id(),
+          pid: pid(),
+          auth_type: atom(),
+          credentials: map(),
+          model: String.t(),
+          endpoint: String.t(),
+          request_body: map(),
+          buffer: String.t(),
+          status: :active | :completed | :error,
+          error: term() | nil,
+          events: [map()],
+          subscribers: [pid()]
+        }
 
   @type state :: %{
-    streams: %{stream_id() => stream_state()},
-    stream_counter: non_neg_integer()
-  }
+          streams: %{stream_id() => stream_state()},
+          stream_counter: non_neg_integer()
+        }
 
   # Client API
 
@@ -47,7 +47,10 @@ defmodule Gemini.Streaming.Manager do
   Returns a stream ID that can be used to subscribe to events.
   """
   def start_stream(auth_type, credentials, model, endpoint, request_body, opts \\ []) do
-    GenServer.call(__MODULE__, {:start_stream, auth_type, credentials, model, endpoint, request_body, opts})
+    GenServer.call(
+      __MODULE__,
+      {:start_stream, auth_type, credentials, model, endpoint, request_body, opts}
+    )
   end
 
   @doc """
@@ -115,14 +118,21 @@ defmodule Gemini.Streaming.Manager do
     state = %{
       streams: %{},
       stream_counter: 0,
-      monitors: %{},  # Track monitors: %{monitor_ref => {stream_id, pid}}
-      recent_subscribers: %{}  # Track recently added subscribers: %{pid => timestamp}
+      # Track monitors: %{monitor_ref => {stream_id, pid}}
+      monitors: %{},
+      # Track recently added subscribers: %{pid => timestamp}
+      recent_subscribers: %{}
     }
+
     {:ok, state}
   end
 
   @impl true
-  def handle_call({:start_stream, auth_type, credentials, model, endpoint, request_body, _opts}, {caller_pid, _ref}, state) do
+  def handle_call(
+        {:start_stream, auth_type, credentials, model, endpoint, request_body, _opts},
+        {caller_pid, _ref},
+        state
+      ) do
     stream_id = generate_stream_id(state.stream_counter)
 
     stream_state = %{
@@ -143,10 +153,12 @@ defmodule Gemini.Streaming.Manager do
     # Start the actual streaming request
     case start_http_stream(stream_state) do
       {:ok, _} ->
-        new_state = %{state |
-          streams: Map.put(state.streams, stream_id, stream_state),
-          stream_counter: state.stream_counter + 1
+        new_state = %{
+          state
+          | streams: Map.put(state.streams, stream_id, stream_state),
+            stream_counter: state.stream_counter + 1
         }
+
         {:reply, {:ok, stream_id}, new_state}
     end
   end
@@ -163,8 +175,9 @@ defmodule Gemini.Streaming.Manager do
           {:reply, :ok, state}
         else
           # Always add the subscriber first
-          updated_stream = %{stream_state |
-            subscribers: [subscriber_pid | stream_state.subscribers]
+          updated_stream = %{
+            stream_state
+            | subscribers: [subscriber_pid | stream_state.subscribers]
           }
 
           # Monitor the subscriber process
@@ -175,10 +188,12 @@ defmodule Gemini.Streaming.Manager do
           new_recent_subscribers = Map.put(state.recent_subscribers, subscriber_pid, current_time)
 
           new_monitors = Map.put(state.monitors, monitor_ref, {stream_id, subscriber_pid})
-          new_state = %{state |
-            streams: Map.put(state.streams, stream_id, updated_stream),
-            monitors: new_monitors,
-            recent_subscribers: new_recent_subscribers
+
+          new_state = %{
+            state
+            | streams: Map.put(state.streams, stream_id, updated_stream),
+              monitors: new_monitors,
+              recent_subscribers: new_recent_subscribers
           }
 
           {:reply, :ok, new_state}
@@ -193,8 +208,9 @@ defmodule Gemini.Streaming.Manager do
         {:reply, {:error, :stream_not_found}, state}
 
       stream_state ->
-        updated_stream = %{stream_state |
-          subscribers: List.delete(stream_state.subscribers, subscriber_pid)
+        updated_stream = %{
+          stream_state
+          | subscribers: List.delete(stream_state.subscribers, subscriber_pid)
         }
 
         # Find and remove the monitor for this subscriber
@@ -212,10 +228,12 @@ defmodule Gemini.Streaming.Manager do
           Process.demonitor(monitor_to_remove, [:flush])
         end
 
-        new_state = %{state |
-          streams: Map.put(state.streams, stream_id, updated_stream),
-          monitors: new_monitors
+        new_state = %{
+          state
+          | streams: Map.put(state.streams, stream_id, updated_stream),
+            monitors: new_monitors
         }
+
         {:reply, :ok, new_state}
     end
   end
@@ -268,11 +286,14 @@ defmodule Gemini.Streaming.Manager do
     }
 
     new_monitors = Map.put(state.monitors, monitor_ref, {stream_id, subscriber_pid})
-    new_state = %{state |
-      streams: Map.put(state.streams, stream_id, stream_state),
-      stream_counter: state.stream_counter + 1,
-      monitors: new_monitors
+
+    new_state = %{
+      state
+      | streams: Map.put(state.streams, stream_id, stream_state),
+        stream_counter: state.stream_counter + 1,
+        monitors: new_monitors
     }
+
     {:reply, {:ok, stream_id}, new_state}
   end
 
@@ -345,10 +366,12 @@ defmodule Gemini.Streaming.Manager do
       {stream_id, dead_pid} ->
         # Check if this was a recently added subscriber (within last 50ms)
         current_time = System.monotonic_time(:millisecond)
-        recently_added = case Map.get(state.recent_subscribers, dead_pid) do
-          nil -> false
-          add_time -> (current_time - add_time) < 50
-        end
+
+        recently_added =
+          case Map.get(state.recent_subscribers, dead_pid) do
+            nil -> false
+            add_time -> current_time - add_time < 50
+          end
 
         if recently_added do
           # Don't remove recently added subscribers immediately to prevent race conditions
@@ -361,7 +384,8 @@ defmodule Gemini.Streaming.Manager do
           case Map.get(state.streams, stream_id) do
             nil ->
               # Stream doesn't exist anymore, just remove the monitor
-              {:noreply, %{state | monitors: new_monitors, recent_subscribers: new_recent_subscribers}}
+              {:noreply,
+               %{state | monitors: new_monitors, recent_subscribers: new_recent_subscribers}}
 
             stream_state ->
               # Remove the dead process from subscribers
@@ -370,12 +394,26 @@ defmodule Gemini.Streaming.Manager do
               if Enum.empty?(updated_subscribers) do
                 # No more subscribers, remove the stream entirely
                 new_streams = Map.delete(state.streams, stream_id)
-                {:noreply, %{state | streams: new_streams, monitors: new_monitors, recent_subscribers: new_recent_subscribers}}
+
+                {:noreply,
+                 %{
+                   state
+                   | streams: new_streams,
+                     monitors: new_monitors,
+                     recent_subscribers: new_recent_subscribers
+                 }}
               else
                 # Update stream with remaining subscribers
                 updated_stream = %{stream_state | subscribers: updated_subscribers}
                 new_streams = Map.put(state.streams, stream_id, updated_stream)
-                {:noreply, %{state | streams: new_streams, monitors: new_monitors, recent_subscribers: new_recent_subscribers}}
+
+                {:noreply,
+                 %{
+                   state
+                   | streams: new_streams,
+                     monitors: new_monitors,
+                     recent_subscribers: new_recent_subscribers
+                 }}
               end
           end
         end
@@ -392,7 +430,15 @@ defmodule Gemini.Streaming.Manager do
   defp start_http_stream(stream_state) do
     # Build the authenticated request using the auth strategy
     base_url = Gemini.Auth.get_base_url(stream_state.auth_type, stream_state.credentials)
-    path = Gemini.Auth.build_path(stream_state.auth_type, stream_state.model, stream_state.endpoint, stream_state.credentials)
+
+    path =
+      Gemini.Auth.build_path(
+        stream_state.auth_type,
+        stream_state.model,
+        stream_state.endpoint,
+        stream_state.credentials
+      )
+
     headers = Gemini.Auth.build_headers(stream_state.auth_type, stream_state.credentials)
 
     full_url = "#{base_url}/#{path}?alt=sse"
@@ -407,6 +453,7 @@ defmodule Gemini.Streaming.Manager do
           Enum.each(events, fn event ->
             send(manager_pid, {:stream_event, stream_id, event})
           end)
+
           send(manager_pid, {:stream_complete, stream_id})
 
         {:error, error} ->

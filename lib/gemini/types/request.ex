@@ -17,12 +17,12 @@ defmodule Gemini.Types.Request.GenerateContentRequest do
 
   @derive Jason.Encoder
   typedstruct do
-    field :contents, [Content.t()], enforce: true
-    field :tools, [map()], default: []
-    field :tool_config, map() | nil, default: nil
-    field :safety_settings, [SafetySetting.t()], default: []
-    field :system_instruction, Content.t() | nil, default: nil
-    field :generation_config, GenerationConfig.t() | nil, default: nil
+    field(:contents, [Content.t()], enforce: true)
+    field(:tools, [map()], default: [])
+    field(:tool_config, map() | nil, default: nil)
+    field(:safety_settings, [SafetySetting.t()], default: [])
+    field(:system_instruction, Content.t() | nil, default: nil)
+    field(:generation_config, GenerationConfig.t() | nil, default: nil)
   end
 end
 
@@ -35,8 +35,8 @@ defmodule Gemini.Types.Request.ListModelsRequest do
 
   @derive Jason.Encoder
   typedstruct do
-    field :page_size, integer() | nil, default: nil
-    field :page_token, String.t() | nil, default: nil
+    field(:page_size, integer() | nil, default: nil)
+    field(:page_token, String.t() | nil, default: nil)
   end
 end
 
@@ -49,7 +49,7 @@ defmodule Gemini.Types.Request.GetModelRequest do
 
   @derive Jason.Encoder
   typedstruct do
-    field :name, String.t(), enforce: true
+    field(:name, String.t(), enforce: true)
   end
 end
 
@@ -64,6 +64,6 @@ defmodule Gemini.Types.Request.CountTokensRequest do
 
   @derive Jason.Encoder
   typedstruct do
-    field :contents, [Content.t()], enforce: true
+    field(:contents, [Content.t()], enforce: true)
   end
 end

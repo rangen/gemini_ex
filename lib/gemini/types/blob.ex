@@ -7,18 +7,23 @@ defmodule Gemini.Types.Blob do
 
   @derive Jason.Encoder
   typedstruct do
-    @typedoc "Base64 encoded binary data."
-    field :data, String.t(), enforce: true
-
-    @typedoc "MIME type of the data."
-    field :mime_type, String.t(), enforce: true
+    field(:data, String.t(), enforce: true)
+    field(:mime_type, String.t(), enforce: true)
   end
+
+  @typedoc "Base64 encoded binary data."
+  @type blob_data :: String.t()
+
+  @typedoc "MIME type of the data."
+  @type mime_type :: String.t()
 
   @doc """
   Create a new blob with base64 encoded data.
   """
+  @spec new(String.t(), String.t()) :: t()
   def new(data, mime_type) when is_binary(data) and is_binary(mime_type) do
     encoded_data = Base.encode64(data)
+
     %__MODULE__{
       data: encoded_data,
       mime_type: mime_type
@@ -28,6 +33,7 @@ defmodule Gemini.Types.Blob do
   @doc """
   Create a blob from a file path.
   """
+  @spec from_file(String.t()) :: {:ok, t()} | {:error, Gemini.Error.t()}
   def from_file(file_path) do
     case File.read(file_path) do
       {:ok, data} ->

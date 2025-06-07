@@ -29,7 +29,8 @@ defmodule Gemini.AuthTest do
     end
 
     test "returns error when strategy authentication fails" do
-      config = %{auth_type: :gemini}  # missing api_key
+      # missing api_key
+      config = %{auth_type: :gemini}
 
       assert {:error, _} = Auth.authenticate(GeminiStrategy, config)
     end
@@ -39,7 +40,8 @@ defmodule Gemini.AuthTest do
     test "delegates to strategy base_url/1" do
       config = %{auth_type: :gemini}
 
-      assert Auth.base_url(GeminiStrategy, config) == "https://generativelanguage.googleapis.com/v1beta"
+      assert Auth.base_url(GeminiStrategy, config) ==
+               "https://generativelanguage.googleapis.com/v1beta"
     end
   end
 end

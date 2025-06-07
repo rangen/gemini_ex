@@ -101,7 +101,8 @@ defmodule Gemini.ConfigTest do
     test "allows overriding auth_type" do
       System.put_env("GEMINI_API_KEY", "test-key")
 
-      config = Config.get(auth_type: :vertex, project_id: "override-project", location: "us-west1")
+      config =
+        Config.get(auth_type: :vertex, project_id: "override-project", location: "us-west1")
 
       assert config.auth_type == :vertex
       assert config.project_id == "override-project"

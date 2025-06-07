@@ -7,16 +7,20 @@ defmodule Gemini.Types.Content do
 
   @derive Jason.Encoder
   typedstruct do
-    @typedoc "The role of the content creator."
-    field :role, String.t(), default: "user"
-
-    @typedoc "Ordered parts that constitute a single message."
-    field :parts, [Gemini.Types.Part.t()], default: []
+    field(:role, String.t(), default: "user")
+    field(:parts, [Gemini.Types.Part.t()], default: [])
   end
+
+  @typedoc "The role of the content creator."
+  @type role :: String.t()
+
+  @typedoc "Ordered parts that constitute a single message."
+  @type parts :: [Gemini.Types.Part.t()]
 
   @doc """
   Create content with text.
   """
+  @spec text(String.t(), String.t()) :: t()
   def text(text, role \\ "user") do
     %__MODULE__{
       role: role,
@@ -27,6 +31,7 @@ defmodule Gemini.Types.Content do
   @doc """
   Create content with text and image.
   """
+  @spec multimodal(String.t(), String.t(), String.t(), String.t()) :: t()
   def multimodal(text, image_data, mime_type, role \\ "user") do
     %__MODULE__{
       role: role,
@@ -40,6 +45,7 @@ defmodule Gemini.Types.Content do
   @doc """
   Create content with an image from a file path.
   """
+  @spec image(String.t(), String.t()) :: t()
   def image(path, role \\ "user") do
     %__MODULE__{
       role: role,

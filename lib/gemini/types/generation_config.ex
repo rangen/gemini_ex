@@ -7,18 +7,18 @@ defmodule Gemini.Types.GenerationConfig do
 
   @derive Jason.Encoder
   typedstruct do
-    field :stop_sequences, [String.t()], default: []
-    field :response_mime_type, String.t() | nil, default: nil
-    field :response_schema, map() | nil, default: nil
-    field :candidate_count, integer() | nil, default: nil
-    field :max_output_tokens, integer() | nil, default: nil
-    field :temperature, float() | nil, default: nil
-    field :top_p, float() | nil, default: nil
-    field :top_k, integer() | nil, default: nil
-    field :presence_penalty, float() | nil, default: nil
-    field :frequency_penalty, float() | nil, default: nil
-    field :response_logprobs, boolean() | nil, default: nil
-    field :logprobs, integer() | nil, default: nil
+    field(:stop_sequences, [String.t()], default: [])
+    field(:response_mime_type, String.t() | nil, default: nil)
+    field(:response_schema, map() | nil, default: nil)
+    field(:candidate_count, integer() | nil, default: nil)
+    field(:max_output_tokens, integer() | nil, default: nil)
+    field(:temperature, float() | nil, default: nil)
+    field(:top_p, float() | nil, default: nil)
+    field(:top_k, integer() | nil, default: nil)
+    field(:presence_penalty, float() | nil, default: nil)
+    field(:frequency_penalty, float() | nil, default: nil)
+    field(:response_logprobs, boolean() | nil, default: nil)
+    field(:logprobs, integer() | nil, default: nil)
   end
 
   @doc """

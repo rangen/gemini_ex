@@ -25,7 +25,8 @@ defmodule Gemini.Streaming.ManagerTest do
 
       assert {:ok, stream_id} = Manager.start_stream(contents, opts, self())
       assert is_binary(stream_id)
-      assert String.length(stream_id) == 32  # UUID without hyphens
+      # UUID without hyphens
+      assert String.length(stream_id) == 32
     end
 
     test "each stream gets unique stream_id" do
@@ -185,13 +186,14 @@ defmodule Gemini.Streaming.ManagerTest do
       opts = []
 
       # Create a temporary process as subscriber
-      subscriber = spawn(fn ->
-        receive do
-          :stop -> :ok
-        after
-          100 -> :ok
-        end
-      end)
+      subscriber =
+        spawn(fn ->
+          receive do
+            :stop -> :ok
+          after
+            100 -> :ok
+          end
+        end)
 
       {:ok, stream_id} = Manager.start_stream(contents, opts, subscriber)
 

@@ -32,20 +32,19 @@ defmodule Gemini do
   """
 
   alias Gemini.{Generate, Models}
-  alias Gemini.{Config, Auth}
-  alias Gemini.Types.{Content, Part, GenerationConfig, SafetySetting}
+  alias Gemini.Config
+  alias Gemini.Types.{Content, Part}
   alias Gemini.Types.Response.{GenerateContentResponse, Candidate}
-  alias Gemini.Client.HTTP
   alias Gemini.Streaming.Manager
 
   @doc """
   Start the Gemini client.
 
-  This starts the underlying HTTP client pool and streaming manager.
+  This starts the streaming manager (HTTP client no longer needs explicit startup with Req).
   """
+  @spec start_link() :: {:ok, :started} | {:error, term()}
   def start_link do
-    with {:ok, _http} <- HTTP.start_link(),
-         {:ok, _stream} <- Manager.start_link() do
+    with {:ok, _stream} <- Manager.start_link() do
       {:ok, :started}
     end
   end
@@ -76,6 +75,7 @@ defmodule Gemini do
         location: "us-central1"
       })
   """
+  @spec configure(atom(), map()) :: :ok
   def configure(auth_type, credentials) do
     Application.put_env(:gemini, :auth, %{type: auth_type, credentials: credentials})
     :ok
@@ -84,6 +84,7 @@ defmodule Gemini do
   @doc """
   Get the current authentication configuration.
   """
+  @spec get_auth_config() :: map() | nil
   def get_auth_config do
     Config.auth_config()
   end
@@ -115,6 +116,8 @@ defmodule Gemini do
       {:ok, response} = Gemini.generate(contents)
 
   """
+  @spec generate(String.t() | [Content.t()], keyword()) ::
+          {:ok, GenerateContentResponse.t()} | {:error, term()}
   def generate(contents, opts \\ []) do
     Generate.content(contents, opts)
   end
@@ -326,7 +329,10 @@ defmodule Gemini do
       {:ok, text} = Gemini.extract_text(response)
 
   """
-  def extract_text(%GenerateContentResponse{candidates: [%Candidate{content: %Content{parts: [%Part{text: text} | _]}} | _]}) do
+  @spec extract_text(GenerateContentResponse.t()) :: {:ok, String.t()} | {:error, String.t()}
+  def extract_text(%GenerateContentResponse{
+        candidates: [%Candidate{content: %Content{parts: [%Part{text: text} | _]}} | _]
+      }) do
     {:ok, text}
   end
 
@@ -359,6 +365,7 @@ defmodule Gemini do
           parts
           |> Enum.filter(fn part -> match?(%Part{text: text} when is_binary(text), part) end)
           |> Enum.map(fn %Part{text: text} -> text end)
+
         _ ->
           []
       end

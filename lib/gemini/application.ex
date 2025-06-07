@@ -6,7 +6,6 @@ defmodule Gemini.Application do
   @impl true
   def start(_type, _args) do
     children = [
-      {Finch, name: Gemini.Client.HTTP},
       {Gemini.Streaming.Manager, []}
     ]
 

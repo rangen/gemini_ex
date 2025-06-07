@@ -4,7 +4,7 @@ defmodule Gemini.Models do
   """
 
   alias Gemini.Client.HTTP
-  alias Gemini.Types.Request.{ListModelsRequest, GetModelRequest}
+  alias Gemini.Types.Request.ListModelsRequest
   alias Gemini.Types.Response.{ListModelsResponse, Model}
   alias Gemini.Error
 
@@ -52,11 +52,12 @@ defmodule Gemini.Models do
   """
   def get(model_name) when is_binary(model_name) do
     # Ensure the model name has the proper format
-    full_name = if String.starts_with?(model_name, "models/") do
-      model_name
-    else
-      "models/#{model_name}"
-    end
+    full_name =
+      if String.starts_with?(model_name, "models/") do
+        model_name
+      else
+        "models/#{model_name}"
+      end
 
     case HTTP.get(full_name) do
       {:ok, response} -> parse_model_response(response)

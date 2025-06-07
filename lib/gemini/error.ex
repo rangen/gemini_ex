@@ -6,24 +6,31 @@ defmodule Gemini.Error do
   use TypedStruct
 
   typedstruct do
-    @typedoc "The type of error."
-    field :type, atom(), enforce: true
-
-    @typedoc "A human-readable message describing the error."
-    field :message, String.t(), enforce: true
-
-    @typedoc "The HTTP status code, if the error originated from an HTTP response."
-    field :http_status, integer() | nil, default: nil
-
-    @typedoc "API-specific error code or reason, if provided by Gemini."
-    field :api_reason, term() | nil, default: nil
-
-    @typedoc "Additional details or context about the error."
-    field :details, map() | nil, default: nil
-
-    @typedoc "The original error term, if this error is wrapping another."
-    field :original_error, term() | nil, default: nil
+    field(:type, atom(), enforce: true)
+    field(:message, String.t(), enforce: true)
+    field(:http_status, integer() | nil, default: nil)
+    field(:api_reason, term() | nil, default: nil)
+    field(:details, map() | nil, default: nil)
+    field(:original_error, term() | nil, default: nil)
   end
+
+  @typedoc "The type of error."
+  @type error_type :: atom()
+
+  @typedoc "A human-readable message describing the error."
+  @type error_message :: String.t()
+
+  @typedoc "The HTTP status code, if the error originated from an HTTP response."
+  @type http_status :: integer() | nil
+
+  @typedoc "API-specific error code or reason, if provided by Gemini."
+  @type api_reason :: term() | nil
+
+  @typedoc "Additional details or context about the error."
+  @type error_details :: map() | nil
+
+  @typedoc "The original error term, if this error is wrapping another."
+  @type original_error :: term() | nil
 
   @doc """
   Create a new error with type and message.

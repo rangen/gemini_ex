@@ -8,7 +8,11 @@ defmodule Gemini.Auth.GeminiStrategyTest do
       config = %{api_key: "test-api-key-123"}
 
       assert {:ok, headers} = GeminiStrategy.authenticate(config)
-      assert headers == [{"Content-Type", "application/json"}, {"x-goog-api-key", "test-api-key-123"}]
+
+      assert headers == [
+               {"Content-Type", "application/json"},
+               {"x-goog-api-key", "test-api-key-123"}
+             ]
     end
 
     test "returns error when API key is missing" do

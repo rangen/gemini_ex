@@ -9,9 +9,9 @@ defmodule GeminiTest do
       content = Content.text("Hello, world!")
 
       assert %Content{
-        parts: [%Part{text: "Hello, world!"}],
-        role: "user"
-      } = content
+               parts: [%Part{text: "Hello, world!"}],
+               role: "user"
+             } = content
     end
 
     test "creates multimodal content" do
@@ -22,9 +22,9 @@ defmodule GeminiTest do
       content = Content.image(temp_path)
 
       assert %Content{
-        parts: [%Part{inline_data: %Gemini.Types.Blob{}}],
-        role: "user"
-      } = content
+               parts: [%Part{inline_data: %Gemini.Types.Blob{}}],
+               role: "user"
+             } = content
 
       File.rm!(temp_path)
     end
@@ -35,19 +35,19 @@ defmodule GeminiTest do
       config = GenerationConfig.creative()
 
       assert %GenerationConfig{
-        temperature: 0.9,
-        top_p: 1.0,
-        top_k: 40
-      } = config
+               temperature: 0.9,
+               top_p: 1.0,
+               top_k: 40
+             } = config
     end
 
     test "creates deterministic config" do
       config = GenerationConfig.deterministic()
 
       assert %GenerationConfig{
-        temperature: 0.0,
-        candidate_count: 1
-      } = config
+               temperature: +0.0,
+               candidate_count: 1
+             } = config
     end
   end
 
@@ -56,18 +56,20 @@ defmodule GeminiTest do
       settings = SafetySetting.defaults()
 
       assert length(settings) == 4
+
       assert Enum.all?(settings, fn setting ->
-        setting.threshold == :block_medium_and_above
-      end)
+               setting.threshold == :block_medium_and_above
+             end)
     end
 
     test "creates permissive safety settings" do
       settings = SafetySetting.permissive()
 
       assert length(settings) == 4
+
       assert Enum.all?(settings, fn setting ->
-        setting.threshold == :block_only_high
-      end)
+               setting.threshold == :block_only_high
+             end)
     end
   end
 

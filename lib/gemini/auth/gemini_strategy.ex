@@ -49,7 +49,9 @@ defmodule Gemini.Auth.GeminiStrategy do
   @impl true
   def build_path(model, endpoint, _credentials) do
     # Normalize model name - add "models/" prefix if not present
-    normalized_model = if String.starts_with?(model, "models/"), do: model, else: "models/#{model}"
+    normalized_model =
+      if String.starts_with?(model, "models/"), do: model, else: "models/#{model}"
+
     "#{normalized_model}:#{endpoint}"
   end
 
