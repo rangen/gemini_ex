@@ -339,7 +339,7 @@ defmodule Gemini.Auth.VertexStrategyTest do
       # Should return either success or error (depending on key validity)
       assert match?({:ok, _}, result) or match?({:error, _}, result)
 
-      File.rm!(temp_path)
+      if File.exists?(temp_path), do: File.rm!(temp_path)
     end
 
     test "creates JWT with service account data" do

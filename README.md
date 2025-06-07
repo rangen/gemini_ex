@@ -256,18 +256,60 @@ content = %Content{
 
 ## Testing
 
-Run the test suite:
+### Running Unit Tests
+
+Run the standard test suite with mocked API responses:
 
 ```bash
 mix test
 ```
 
-For integration tests with the real API (requires API key):
+This runs all tests except live API tests, using mock adapters for fast, reliable testing.
+
+### Running Live API Tests
+
+To test against the actual Google APIs, you can run live integration tests. These require valid credentials and will make real API calls.
+
+#### Gemini API Live Tests
+
+Set up your Gemini API key and run live tests:
 
 ```bash
-export GEMINI_API_KEY="your_api_key"
-mix test --include integration
+export GEMINI_API_KEY="your_api_key_here"
+mix test --include live_api
 ```
+
+#### Vertex AI Live Tests
+
+Set up your Google Cloud service account and run live tests:
+
+```bash
+export VERTEX_JSON_FILE="/path/to/your/service-account.json"
+export VERTEX_PROJECT_ID="your-gcp-project-id"  # Optional, auto-detected from JSON
+export VERTEX_LOCATION="us-central1"            # Optional, defaults to us-central1
+mix test --include live_api
+```
+
+#### Running Both Authentication Methods
+
+To test both Gemini API and Vertex AI authentication:
+
+```bash
+export GEMINI_API_KEY="your_api_key_here"
+export VERTEX_JSON_FILE="/path/to/your/service-account.json"
+mix test --include live_api
+```
+
+#### Running Specific Live API Tests
+
+Run only the live API test file:
+
+```bash
+# With environment variables set
+mix test test/live_api_test.exs --include live_api
+```
+
+**Note:** Live API tests make real requests to Google's services and may incur costs. Use test credentials when possible.
 
 ## Examples
 

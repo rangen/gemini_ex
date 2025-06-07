@@ -32,6 +32,7 @@ defmodule Gemini.Auth do
   @doc """
   Get the appropriate authentication strategy based on configuration.
   """
+  @spec get_strategy(auth_type()) :: module()
   def get_strategy(auth_type) do
     case auth_type do
       :gemini -> Gemini.Auth.GeminiStrategy
@@ -45,6 +46,7 @@ defmodule Gemini.Auth do
   Get the appropriate authentication strategy based on configuration.
   (Alias for get_strategy/1 for backward compatibility)
   """
+  @spec strategy(auth_type()) :: module()
   def strategy(auth_type) do
     case auth_type do
       :gemini -> Gemini.Auth.GeminiStrategy
@@ -57,6 +59,7 @@ defmodule Gemini.Auth do
   @doc """
   Authenticate using the given strategy and configuration.
   """
+  @spec authenticate(module(), map()) :: {:ok, map()} | {:error, term()}
   def authenticate(strategy_module, config) do
     strategy_module.authenticate(config)
   end
@@ -64,6 +67,7 @@ defmodule Gemini.Auth do
   @doc """
   Get base URL using the given strategy and configuration.
   """
+  @spec base_url(module(), map()) :: String.t() | {:error, term()}
   def base_url(strategy_module, config) do
     strategy_module.base_url(config)
   end
@@ -71,6 +75,7 @@ defmodule Gemini.Auth do
   @doc """
   Build authenticated headers for the given strategy and credentials.
   """
+  @spec build_headers(auth_type(), map()) :: [{String.t(), String.t()}]
   def build_headers(auth_type, credentials) do
     strategy = get_strategy(auth_type)
     strategy.headers(credentials)
@@ -79,6 +84,7 @@ defmodule Gemini.Auth do
   @doc """
   Get the base URL for the given strategy and credentials.
   """
+  @spec get_base_url(auth_type(), map()) :: String.t() | {:error, term()}
   def get_base_url(auth_type, credentials) do
     strategy = get_strategy(auth_type)
     strategy.base_url(credentials)
@@ -87,6 +93,7 @@ defmodule Gemini.Auth do
   @doc """
   Build the full path for an API endpoint.
   """
+  @spec build_path(auth_type(), String.t(), String.t(), map()) :: String.t()
   def build_path(auth_type, model, endpoint, credentials) do
     strategy = get_strategy(auth_type)
     strategy.build_path(model, endpoint, credentials)
@@ -95,6 +102,7 @@ defmodule Gemini.Auth do
   @doc """
   Refresh credentials if needed (mainly for Vertex AI OAuth tokens).
   """
+  @spec refresh_credentials(auth_type(), map()) :: {:ok, map()} | {:error, term()}
   def refresh_credentials(auth_type, credentials) do
     strategy = get_strategy(auth_type)
     strategy.refresh_credentials(credentials)

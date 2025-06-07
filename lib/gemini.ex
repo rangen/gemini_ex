@@ -35,7 +35,7 @@ defmodule Gemini do
   alias Gemini.Config
   alias Gemini.Types.{Content, Part}
   alias Gemini.Types.Response.{GenerateContentResponse, Candidate}
-  alias Gemini.Streaming.Manager
+  alias Gemini.Streaming.ManagerV2
 
   @doc """
   Start the Gemini client.
@@ -44,7 +44,7 @@ defmodule Gemini do
   """
   @spec start_link() :: {:ok, :started} | {:error, term()}
   def start_link do
-    with {:ok, _stream} <- Manager.start_link() do
+    with {:ok, _stream} <- ManagerV2.start_link() do
       {:ok, :started}
     end
   end
@@ -153,53 +153,42 @@ defmodule Gemini do
       # {:stream_error, stream_id, error}
   """
   def start_stream(contents, opts \\ []) do
-    auth_config = Config.auth_config()
-    model = Keyword.get(opts, :model, Config.default_model())
-    request = Generate.build_generate_request(contents, opts)
-
-    Manager.start_stream(
-      auth_config.type,
-      auth_config.credentials,
-      model,
-      "streamGenerateContent",
-      request,
-      opts
-    )
+    ManagerV2.start_stream(contents, opts, self())
   end
 
   @doc """
   Subscribe to events from a streaming session.
   """
   def subscribe_stream(stream_id, subscriber_pid \\ self()) do
-    Manager.subscribe(stream_id, subscriber_pid)
+    ManagerV2.subscribe_stream(stream_id, subscriber_pid)
   end
 
   @doc """
   Unsubscribe from a streaming session.
   """
   def unsubscribe_stream(stream_id, subscriber_pid \\ self()) do
-    Manager.unsubscribe(stream_id, subscriber_pid)
+    ManagerV2.unsubscribe_stream(stream_id, subscriber_pid)
   end
 
   @doc """
   Stop a streaming session.
   """
   def stop_stream(stream_id) do
-    Manager.stop_stream(stream_id)
+    ManagerV2.stop_stream(stream_id)
   end
 
   @doc """
   Get the status of a streaming session.
   """
   def get_stream_status(stream_id) do
-    Manager.get_stream_status(stream_id)
+    ManagerV2.get_stream_info(stream_id)
   end
 
   @doc """
   List all active streaming sessions.
   """
   def list_streams do
-    Manager.list_streams()
+    ManagerV2.list_streams()
   end
 
   @doc """
