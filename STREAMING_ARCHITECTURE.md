@@ -90,7 +90,7 @@ end)
 ### System Components
 
 ```mermaid
-graph TB
+graph LR
     A[Client Application] --> B[Gemini.Streaming.ManagerV2]
     B --> C[Gemini.Client.HTTPStreaming]
     C --> D[Gemini.SSE.Parser]
@@ -104,26 +104,55 @@ graph TB
     D --> J[Event Buffer]
     D --> K[JSON Parser]
     
-    subgraph "Stream State Management"
+    subgraph S1 [" "]
+        direction TB
+        ST1[🔄 Stream State Management]
         B
         L[Process Monitors]
         M[Resource Cleanup]
         N[Statistics]
     end
     
-    subgraph "HTTP Layer"
+    subgraph S2 [" "]
+        direction TB
+        ST2[🌐 HTTP Layer]
         C
         E
         O[Connection Pool]
         P[Retry Logic]
     end
     
-    subgraph "SSE Processing"
+    subgraph S3 [" "]
+        direction TB
+        ST3[⚡ SSE Processing]
         D
         J
         K
         Q[Event Validation]
     end
+
+    %% Styling
+    classDef primary fill:#6B46C1,stroke:#4C1D95,stroke-width:3px,color:#FFFFFF
+    classDef secondary fill:#9333EA,stroke:#6B21A8,stroke-width:2px,color:#FFFFFF
+    classDef tertiary fill:#A855F7,stroke:#7C2D12,stroke-width:2px,color:#FFFFFF
+    classDef api fill:#EF4444,stroke:#B91C1C,stroke-width:2px,color:#FFFFFF
+    classDef subscriber fill:#10B981,stroke:#047857,stroke-width:2px,color:#FFFFFF
+    classDef subgraphTitle fill:#1E1B4B,stroke:#312E81,stroke-width:2px,color:#FFFFFF
+    
+    %% Apply classes
+    class A primary
+    class B primary
+    class C,E secondary
+    class D,J,K tertiary
+    class F api
+    class G,H,I subscriber
+    class L,M,N,O,P,Q tertiary
+    class ST1,ST2,ST3 subgraphTitle
+    
+    %% Subgraph styling
+    style S1 fill:#F3F4F6,stroke:#6B46C1,stroke-width:3px
+    style S2 fill:#F9FAFB,stroke:#9333EA,stroke-width:3px
+    style S3 fill:#FEFEFE,stroke:#A855F7,stroke-width:3px
 ```
 
 ### Data Flow
