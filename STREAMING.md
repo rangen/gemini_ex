@@ -26,35 +26,59 @@ graph TD
     Demo --> |Text Output| CLI
     
     %% Detailed Internal Flow
-    subgraph "HTTP Streaming Process"
+    subgraph S1 [" "]
+        direction TB
+        ST1[🌐 HTTP Streaming Process]
         HTTPClient --> |spawn process| StreamProcess[Stream Process]
         StreamProcess --> |do_stream| DoStream[Execute HTTP Request]
         DoStream --> |Response Body| ParseBody[Parse Complete Body]
         ParseBody --> |send messages| Manager
     end
     
-    subgraph "SSE Parser State"
+    subgraph S2 [" "]
+        direction TB
+        ST2[⚡ SSE Parser State]
         Parser --> Buffer[String Buffer]
         Parser --> Events[Parsed Events]
         Buffer --> |extract_events| EventList[Event List]
         EventList --> |parse_event| JSONParse[JSON Parsing]
     end
     
-    subgraph "Manager State"
+    subgraph S3 [" "]
+        direction TB
+        ST3[🔄 Manager State]
         Manager --> StreamMap[Stream State Map]
         Manager --> Subscribers[Subscriber List]
         StreamMap --> StreamState[Individual Stream State]
         StreamState --> Status[Status: starting/active/complete]
     end
     
-    %% Problem Areas Highlighted
-    classDef problem fill:#ff6b6b,stroke:#d63031,stroke-width:3px,color:#fff
-    classDef solution fill:#00b894,stroke:#00a085,stroke-width:2px,color:#fff
-    classDef normal fill:#74b9ff,stroke:#0984e3,stroke-width:2px,color:#fff
+    %% Styling
+    classDef primary fill:#6B46C1,stroke:#4C1D95,stroke-width:3px,color:#FFFFFF
+    classDef secondary fill:#9333EA,stroke:#6B21A8,stroke-width:2px,color:#FFFFFF
+    classDef tertiary fill:#A855F7,stroke:#7C2D12,stroke-width:2px,color:#FFFFFF
+    classDef api fill:#EF4444,stroke:#B91C1C,stroke-width:2px,color:#FFFFFF
+    classDef subscriber fill:#10B981,stroke:#047857,stroke-width:2px,color:#FFFFFF
+    classDef subgraphTitle fill:#1E1B4B,stroke:#312E81,stroke-width:2px,color:#FFFFFF
+    classDef problem fill:#DC2626,stroke:#991B1B,stroke-width:3px,color:#FFFFFF
+    classDef solution fill:#059669,stroke:#047857,stroke-width:2px,color:#FFFFFF
+    classDef normal fill:#3B82F6,stroke:#1D4ED8,stroke-width:2px,color:#FFFFFF
     
+    %% Apply classes
+    class CLI,Demo primary
+    class GeminiAPI,Manager primary
+    class HTTPClient,ReqLib secondary
+    class Parser,Buffer,Events,EventList,JSONParse tertiary
+    class API api
+    class StreamProcess normal
     class DoStream,ParseBody problem
-    class StreamProcess,HTTPClient normal
-    class Manager,Parser solution
+    class StreamMap,Subscribers,StreamState,Status solution
+    class ST1,ST2,ST3 subgraphTitle
+    
+    %% Subgraph styling
+    style S1 fill:#F9FAFB,stroke:#9333EA,stroke-width:3px
+    style S2 fill:#FEFEFE,stroke:#A855F7,stroke-width:3px
+    style S3 fill:#F3F4F6,stroke:#059669,stroke-width:3px
 ```
 
 ## The Core Concurrency Problem
