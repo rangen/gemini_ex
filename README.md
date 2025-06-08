@@ -201,14 +201,106 @@ contents = [Content.text("Describe"), Content.image("image.jpg")]
 
 ## Configuration Options
 
-Configure the client in your `config/config.exs`:
+### Authentication Strategies
+
+The library supports two authentication strategies that can be configured at runtime:
+
+#### Gemini API Authentication
+
+```elixir
+# Runtime configuration (recommended)
+Gemini.configure(:gemini, %{api_key: "your_api_key"})
+
+# Or application config
+config :gemini, api_key: "your_api_key"
+
+# Or environment variable
+export GEMINI_API_KEY="your_api_key"
+```
+
+#### Vertex AI Authentication
+
+```elixir
+# With access token
+Gemini.configure(:vertex_ai, %{
+  access_token: "your_access_token",
+  project_id: "your-project-id",
+  location: "us-central1"
+})
+
+# With service account JSON file
+Gemini.configure(:vertex_ai, %{
+  service_account_key: "/path/to/service-account.json",
+  project_id: "your-project-id",  # Optional, auto-detected from JSON
+  location: "us-central1"         # Optional, defaults to us-central1
+})
+```
+
+### Current Configuration Model
+
+**Important:** The current version uses a **single global configuration** that applies to all API calls. Only one authentication strategy can be active at a time.
+
+```elixir
+# This overwrites any previous configuration
+Gemini.configure(:gemini, %{api_key: "gemini_key"})
+{:ok, response1} = Gemini.generate("Hello")  # Uses Gemini API
+
+# This overwrites the Gemini configuration  
+Gemini.configure(:vertex_ai, %{
+  service_account_key: "/path/to/key.json",
+  project_id: "project"
+})
+{:ok, response2} = Gemini.generate("Hello")  # Uses Vertex AI
+
+# Check current configuration
+auth_config = Gemini.get_auth_config()
+```
+
+### Configuration Priority
+
+Configuration is resolved in this order (highest to lowest priority):
+
+1. **Environment Variables** (always takes precedence)
+   - `GEMINI_API_KEY`
+   - `VERTEX_JSON_FILE` / `VERTEX_SERVICE_ACCOUNT` 
+   - `VERTEX_PROJECT_ID` / `GOOGLE_CLOUD_PROJECT`
+   - `VERTEX_LOCATION` / `GOOGLE_CLOUD_LOCATION`
+
+2. **Runtime Configuration** (via `Gemini.configure/2`)
+
+3. **Application Configuration** (in `config/config.exs`)
+
+### Multiple Adapters (Future Enhancement)
+
+The current architecture doesn't support multiple simultaneous configurations. If you need to use both Gemini API and Vertex AI in the same application, you would need to:
+
+1. **Switch configurations dynamically:**
+   ```elixir
+   # Switch to Gemini
+   Gemini.configure(:gemini, %{api_key: "key"})
+   {:ok, gemini_response} = Gemini.generate("Hello from Gemini")
+   
+   # Switch to Vertex AI
+   Gemini.configure(:vertex_ai, %{service_account_key: "/path/to/key.json", project_id: "project"})
+   {:ok, vertex_response} = Gemini.generate("Hello from Vertex")
+   ```
+
+2. **Use environment variables to control which auth method is active**
+
+For true multi-adapter support, future versions could implement:
+- Named adapter instances: `Gemini.Adapter.new(:gemini_prod, config)`
+- Per-request configuration: `Gemini.generate(text, auth: config)`
+- Process-specific configuration storage
+
+### Additional Configuration
+
+Configure other options in your `config/config.exs`:
 
 ```elixir
 config :gemini,
-  api_key: "your_api_key",
-  base_url: "https://generativelanguage.googleapis.com/v1beta",
   default_model: "gemini-2.0-flash",
   timeout: 30_000,
+  telemetry_enabled: true,
   streaming: [
     max_concurrent_streams: 100,
     default_timeout: 30_000,
@@ -218,10 +310,10 @@ config :gemini,
 
 ### Environment Variables
 
-- `GEMINI_API_KEY` - Your Gemini API key (overrides config)
-- `VERTEX_JSON_FILE` - Path to Google Cloud service account JSON file (for Vertex AI)
-- `VERTEX_PROJECT_ID` - Google Cloud project ID (optional, auto-detected from JSON)
-- `VERTEX_LOCATION` - Google Cloud location (optional, defaults to us-central1)
+- `GEMINI_API_KEY` - Your Gemini API key (overrides all other config)
+- `VERTEX_JSON_FILE` / `VERTEX_SERVICE_ACCOUNT` - Path to service account JSON (overrides all other config)
+- `VERTEX_PROJECT_ID` / `GOOGLE_CLOUD_PROJECT` - Google Cloud project ID (optional, auto-detected from JSON)
+- `VERTEX_LOCATION` / `GOOGLE_CLOUD_LOCATION` - Google Cloud location (optional, defaults to us-central1)
 
 ## Error Handling
 
