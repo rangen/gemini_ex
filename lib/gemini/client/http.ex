@@ -9,6 +9,7 @@ defmodule Gemini.Client.HTTP do
   alias Gemini.Config
   alias Gemini.Auth
   alias Gemini.Error
+  alias Gemini.Telemetry
 
   @doc """
   Make a GET request using the configured authentication.
@@ -29,8 +30,10 @@ defmodule Gemini.Client.HTTP do
   @doc """
   Make an authenticated HTTP request.
   """
-  def request(method, path, body, auth_config, _opts \\ []) do
+  def request(method, path, body, auth_config, opts \\ []) do
     Config.validate!()
+
+    start_time = System.monotonic_time()
 
     case auth_config do
       nil ->
@@ -40,6 +43,11 @@ defmodule Gemini.Client.HTTP do
         url = build_authenticated_url(auth_type, path, credentials)
         headers = Auth.build_headers(auth_type, credentials)
 
+        metadata = Telemetry.build_request_metadata(url, method, opts)
+        measurements = %{system_time: System.system_time()}
+
+        Telemetry.execute([:gemini, :request, :start], measurements, metadata)
+
         req_opts = [
           method: method,
           url: url,
@@ -48,8 +56,39 @@ defmodule Gemini.Client.HTTP do
           json: body
         ]
 
-        Req.request(req_opts)
-        |> handle_response()
+        try do
+          result = Req.request(req_opts) |> handle_response()
+
+          case result do
+            {:ok, _response} ->
+              duration = Telemetry.calculate_duration(start_time)
+
+              stop_measurements = %{
+                duration: duration,
+                status: 200
+              }
+
+              Telemetry.execute([:gemini, :request, :stop], stop_measurements, metadata)
+
+            {:error, error} ->
+              Telemetry.execute(
+                [:gemini, :request, :exception],
+                measurements,
+                Map.put(metadata, :reason, error)
+              )
+          end
+
+          result
+        rescue
+          exception ->
+            Telemetry.execute(
+              [:gemini, :request, :exception],
+              measurements,
+              Map.put(metadata, :reason, exception)
+            )
+
+            reraise exception, __STACKTRACE__
+        end
     end
   end
 
@@ -64,8 +103,10 @@ defmodule Gemini.Client.HTTP do
   @doc """
   Stream a POST request with specific authentication configuration.
   """
-  def stream_post_with_auth(path, body, auth_config, _opts \\ []) do
+  def stream_post_with_auth(path, body, auth_config, opts \\ []) do
     Config.validate!()
+
+    start_time = System.monotonic_time()
 
     case auth_config do
       nil ->
@@ -78,6 +119,12 @@ defmodule Gemini.Client.HTTP do
         # Add SSE parameter to URL
         sse_url = if String.contains?(url, "?"), do: "#{url}&alt=sse", else: "#{url}?alt=sse"
 
+        stream_id = Telemetry.generate_stream_id()
+        metadata = Telemetry.build_stream_metadata(sse_url, :post, stream_id, opts)
+        measurements = %{system_time: System.system_time()}
+
+        Telemetry.execute([:gemini, :stream, :start], measurements, metadata)
+
         req_opts = [
           url: sse_url,
           headers: headers,
@@ -86,16 +133,54 @@ defmodule Gemini.Client.HTTP do
           into: :self
         ]
 
-        case Req.post(req_opts) do
-          {:ok, %Req.Response{status: status, body: body}} when status in 200..299 ->
-            events = parse_sse_stream(body)
-            {:ok, events}
+        try do
+          result =
+            case Req.post(req_opts) do
+              {:ok, %Req.Response{status: status, body: body}} when status in 200..299 ->
+                events = parse_sse_stream(body)
 
-          {:ok, %Req.Response{status: status}} ->
-            {:error, Error.http_error(status, "Stream request failed")}
+                duration = Telemetry.calculate_duration(start_time)
 
-          {:error, reason} ->
-            {:error, Error.network_error(reason)}
+                stop_measurements = %{
+                  total_duration: duration,
+                  total_chunks: length(events)
+                }
+
+                Telemetry.execute([:gemini, :stream, :stop], stop_measurements, metadata)
+
+                {:ok, events}
+
+              {:ok, %Req.Response{status: status}} ->
+                error = {:http_error, status, "Stream request failed"}
+
+                Telemetry.execute(
+                  [:gemini, :stream, :exception],
+                  measurements,
+                  Map.put(metadata, :reason, error)
+                )
+
+                {:error, Error.http_error(status, "Stream request failed")}
+
+              {:error, reason} ->
+                Telemetry.execute(
+                  [:gemini, :stream, :exception],
+                  measurements,
+                  Map.put(metadata, :reason, reason)
+                )
+
+                {:error, Error.network_error(reason)}
+            end
+
+          result
+        rescue
+          exception ->
+            Telemetry.execute(
+              [:gemini, :stream, :exception],
+              measurements,
+              Map.put(metadata, :reason, exception)
+            )
+
+            reraise exception, __STACKTRACE__
         end
     end
   end

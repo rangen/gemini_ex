@@ -226,6 +226,48 @@ defmodule Gemini.Config do
     end
   end
 
+  @doc """
+  Check if telemetry is enabled.
+
+  Determines whether telemetry events should be emitted based on the
+  application configuration. Telemetry is enabled by default unless
+  explicitly disabled.
+
+  ## Configuration
+
+  Set `:telemetry_enabled` to `false` in your application config to disable:
+
+      config :gemini, telemetry_enabled: false
+
+  ## Returns
+
+  - `true` - Telemetry is enabled (default)
+  - `false` - Telemetry is explicitly disabled
+
+  ## Examples
+
+      iex> # Default behavior (telemetry enabled)
+      iex> Gemini.Config.telemetry_enabled?()
+      true
+
+      iex> # Explicitly disabled
+      iex> Application.put_env(:gemini, :telemetry_enabled, false)
+      iex> Gemini.Config.telemetry_enabled?()
+      false
+
+      iex> # Any other value defaults to enabled
+      iex> Application.put_env(:gemini, :telemetry_enabled, :maybe)
+      iex> Gemini.Config.telemetry_enabled?()
+      true
+  """
+  @spec telemetry_enabled? :: boolean()
+  def telemetry_enabled? do
+    case Application.get_env(:gemini, :telemetry_enabled) do
+      false -> false
+      _ -> true
+    end
+  end
+
   # Private functions for environment variable access
 
   defp gemini_api_key do

@@ -30,6 +30,7 @@ defmodule Gemini.MixProject do
       {:typed_struct, "~> 0.3"},
       {:joken, "~> 2.6"},
       {:hackney, "~> 1.18"},
+      {:telemetry, "~> 1.2"},
       {:ex_doc, "~> 0.31", only: :dev, runtime: false},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false}

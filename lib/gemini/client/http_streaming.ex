@@ -11,6 +11,7 @@ defmodule Gemini.Client.HTTPStreaming do
 
   alias Gemini.SSE.Parser
   alias Gemini.Error
+  alias Gemini.Telemetry
 
   require Logger
 
@@ -35,17 +36,17 @@ defmodule Gemini.Client.HTTPStreaming do
   ## Examples
 
       callback = fn
-        %{type: :data, data: data} -> 
+        %{type: :data, data: data} ->
           IO.puts("Received data")
           :ok
-        %{type: :complete} -> 
+        %{type: :complete} ->
           IO.puts("Stream complete")
           :ok
-        %{type: :error, error: _error} -> 
+        %{type: :error, error: _error} ->
           IO.puts("Stream error")
           :stop
       end
-      
+
       HTTPStreaming.stream_sse(url, headers, body, callback)
   """
   @spec stream_sse(String.t(), [{String.t(), String.t()}], map(), stream_callback(), keyword()) ::
@@ -54,7 +55,59 @@ defmodule Gemini.Client.HTTPStreaming do
     timeout = Keyword.get(opts, :timeout, 30_000)
     max_retries = Keyword.get(opts, :max_retries, 3)
 
-    stream_with_retries(url, headers, body, callback, timeout, max_retries, 0)
+    stream_id = Telemetry.generate_stream_id()
+    metadata = Telemetry.build_stream_metadata(url, :post, stream_id, opts)
+    measurements = %{system_time: System.system_time()}
+
+    Telemetry.execute([:gemini, :stream, :start], measurements, metadata)
+
+    try do
+      # Wrap the callback to emit telemetry for chunks
+      telemetry_callback = fn event ->
+        case event do
+          %{type: :data, data: data} ->
+            chunk_measurements = %{
+              chunk_size: calculate_chunk_size(data),
+              system_time: System.system_time()
+            }
+
+            Telemetry.execute([:gemini, :stream, :chunk], chunk_measurements, metadata)
+
+          _ ->
+            :ok
+        end
+
+        callback.(event)
+      end
+
+      result =
+        stream_with_retries(url, headers, body, telemetry_callback, timeout, max_retries, 0)
+
+      case result do
+        {:ok, :completed} ->
+          # Emit stream completion event
+          Telemetry.execute([:gemini, :stream, :stop], %{}, metadata)
+          result
+
+        {:error, error} ->
+          Telemetry.execute(
+            [:gemini, :stream, :exception],
+            measurements,
+            Map.put(metadata, :reason, error)
+          )
+
+          result
+      end
+    rescue
+      exception ->
+        Telemetry.execute(
+          [:gemini, :stream, :exception],
+          measurements,
+          Map.put(metadata, :reason, exception)
+        )
+
+        reraise exception, __STACKTRACE__
+    end
   end
 
   @doc """
@@ -347,4 +400,18 @@ defmodule Gemini.Client.HTTPStreaming do
       _ -> nil
     end
   end
+
+  # Helper functions for telemetry
+
+  defp calculate_chunk_size(data) when is_map(data) do
+    data
+    |> Jason.encode()
+    |> case do
+      {:ok, json} -> byte_size(json)
+      _ -> 0
+    end
+  end
+
+  defp calculate_chunk_size(data) when is_binary(data), do: byte_size(data)
+  defp calculate_chunk_size(_), do: 0
 end

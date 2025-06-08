@@ -7,6 +7,7 @@ defmodule Gemini.Generate do
   alias Gemini.Config
   alias Gemini.Types.{Content, Part}
   alias Gemini.Types.Request.{GenerateContentRequest, CountTokensRequest}
+  alias Gemini.Telemetry
 
   alias Gemini.Types.Response.{
     GenerateContentResponse,
@@ -46,10 +47,18 @@ defmodule Gemini.Generate do
   def content(contents, opts \\ []) when is_list(contents) or is_binary(contents) do
     model = Keyword.get(opts, :model, Config.default_model())
 
+    # Add telemetry metadata
+    enhanced_opts =
+      Keyword.merge(opts,
+        model: model,
+        function: :generate_content,
+        contents_type: Telemetry.classify_contents(contents)
+      )
+
     request = build_generate_request(contents, opts)
     path = "models/#{model}:generateContent"
 
-    case HTTP.post(path, request) do
+    case HTTP.post(path, request, enhanced_opts) do
       {:ok, response} -> parse_generate_response(response)
       {:error, error} -> {:error, error}
     end
@@ -73,10 +82,18 @@ defmodule Gemini.Generate do
   def stream_content(contents, opts \\ []) when is_list(contents) or is_binary(contents) do
     model = Keyword.get(opts, :model, Config.default_model())
 
+    # Add telemetry metadata
+    enhanced_opts =
+      Keyword.merge(opts,
+        model: model,
+        function: :stream_generate_content,
+        contents_type: Telemetry.classify_contents(contents)
+      )
+
     request = build_generate_request(contents, opts)
     path = "models/#{model}:streamGenerateContent?alt=sse"
 
-    case HTTP.stream_post(path, request) do
+    case HTTP.stream_post(path, request, enhanced_opts) do
       {:ok, events} -> parse_stream_responses(events)
       {:error, error} -> {:error, error}
     end
@@ -99,11 +116,19 @@ defmodule Gemini.Generate do
   def count_tokens(contents, opts \\ []) when is_list(contents) or is_binary(contents) do
     model = Keyword.get(opts, :model, Config.default_model())
 
+    # Add telemetry metadata
+    enhanced_opts =
+      Keyword.merge(opts,
+        model: model,
+        function: :count_tokens,
+        contents_type: Telemetry.classify_contents(contents)
+      )
+
     contents_list = normalize_contents(contents)
     request = %CountTokensRequest{contents: contents_list}
     path = "models/#{model}:countTokens"
 
-    case HTTP.post(path, request) do
+    case HTTP.post(path, request, enhanced_opts) do
       {:ok, response} -> parse_count_tokens_response(response)
       {:error, error} -> {:error, error}
     end
