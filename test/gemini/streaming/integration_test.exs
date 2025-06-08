@@ -159,7 +159,7 @@ defmodule Gemini.StreamingIntegrationTest do
 
       try do
         contents = "Hello, world!"
-        opts = [model: "gemini-1.5-pro"]
+        opts = [model: "gemini-2.0-flash"]
 
         # Should fail with proper error when no auth is configured
         assert {:error, :no_auth_config} = ManagerV2.start_stream(contents, opts, self())
@@ -194,7 +194,7 @@ defmodule Gemini.StreamingIntegrationTest do
 
       try do
         contents = "Hello, world!"
-        opts = [model: "gemini-1.5-pro"]
+        opts = [model: "gemini-2.0-flash"]
 
         case ManagerV2.start_stream(contents, opts, self()) do
           {:ok, stream_id} ->
@@ -203,7 +203,7 @@ defmodule Gemini.StreamingIntegrationTest do
             # Verify stream is tracked
             {:ok, info} = ManagerV2.get_stream_info(stream_id)
             assert info.status in [:starting, :active]
-            assert info.model == "gemini-1.5-pro"
+            assert info.model == "gemini-2.0-flash"
 
             # Clean up the stream
             ManagerV2.stop_stream(stream_id)
@@ -359,6 +359,7 @@ defmodule Gemini.StreamingIntegrationTest do
       assert Map.has_key?(stats, :total_subscribers)
     end
 
+    @tag :live_api
     test "handles invalid model names with proper error" do
       # Set up mock authentication
       original_config = Application.get_env(:gemini, :auth)
@@ -422,7 +423,7 @@ defmodule Gemini.StreamingIntegrationTest do
   end
 
   describe "Integration Scenarios" do
-    @tag :integration
+    @tag :live_api
     test "end-to-end streaming with real API" do
       # This test requires GEMINI_API_KEY environment variable
       case System.get_env("GEMINI_API_KEY") do
@@ -450,7 +451,7 @@ defmodule Gemini.StreamingIntegrationTest do
       end
     end
 
-    @tag :integration
+    @tag :live_api
     test "streaming with error handling" do
       case System.get_env("GEMINI_API_KEY") do
         nil ->

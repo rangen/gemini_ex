@@ -1215,7 +1215,7 @@ defmodule Gemini.ErrorRecovery do
         Gemini.generate(original_request.contents, original_request.opts)
       
       :different_model ->
-        fallback_opts = Keyword.put(original_request.opts, :model, "gemini-1.5-flash")
+        fallback_opts = Keyword.put(original_request.opts, :model, "gemini-2.0-flash")
         Gemini.generate(original_request.contents, fallback_opts)
       
       :cached_response ->

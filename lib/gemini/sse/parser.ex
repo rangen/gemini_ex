@@ -79,8 +79,8 @@ defmodule Gemini.SSE.Parser do
 
   @spec extract_events(String.t()) :: {[String.t()], String.t()}
   defp extract_events(data) do
-    # Split by double newlines to separate events
-    parts = String.split(data, "\n\n")
+    # Split by double newlines to separate events (handle both \r\n\r\n and \n\n)
+    parts = String.split(data, ~r/\r?\n\r?\n/)
 
     case parts do
       [] ->

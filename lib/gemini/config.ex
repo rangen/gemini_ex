@@ -12,7 +12,7 @@ defmodule Gemini.Config do
           credentials: map()
         }
 
-  @default_model "gemini-1.5-pro-latest"
+  @default_model "gemini-2.0-flash"
 
   @doc """
   Get configuration based on environment variables and application config.

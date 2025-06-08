@@ -146,7 +146,13 @@ defmodule Gemini.Client.HTTPStreaming do
   @spec stream_with_finch(String.t(), list(), map(), stream_callback(), Parser.t(), integer()) ::
           {:ok, :completed} | {:error, term()}
   defp stream_with_finch(url, headers, body, callback, parser, timeout) do
-    # Configure Req for simple streaming response
+    Logger.debug("Starting real-time streaming with Req to #{url}")
+
+    # Track parser state for real-time processing
+    parser_ref = make_ref()
+    :persistent_term.put(parser_ref, parser)
+
+    # Use Req's `:self` option for real-time streaming
     req_opts = [
       method: :post,
       url: url,
@@ -154,73 +160,160 @@ defmodule Gemini.Client.HTTPStreaming do
       json: body,
       receive_timeout: timeout,
       connect_options: [timeout: 5_000],
-      # Just get the response with raw body
-      raw: true
+      # Use :self to get messages as they arrive
+      into: :self
     ]
 
-    Logger.debug("Starting SSE stream to #{url}")
+    try do
+      case Req.request(req_opts) do
+        {:ok, response} ->
+          # Check for HTTP errors before starting to stream
+          if response.status >= 400 do
+            # For error responses, we need to collect the body from streaming messages
+            error_body = collect_error_body(response, timeout)
+            error_msg = extract_error_message(error_body) || "HTTP #{response.status}"
+            error = Error.http_error(response.status, error_msg)
+            error_event = %{type: :error, data: nil, error: error}
+            callback.(error_event)
+            {:error, error}
+          else
+            # Process streaming messages in real-time
+            stream_loop(response, parser_ref, callback, timeout)
+          end
 
-    case Req.request(req_opts) do
-      {:ok, %Req.Response{status: status, body: body}} when status in 200..299 ->
-        # Parse the complete SSE response
-        case Parser.parse_chunk(body, parser) do
-          {:ok, events, _final_parser} ->
-            # Send each event through the callback
-            Enum.each(events, fn event ->
-              stream_event = %{type: :data, data: event.data, error: nil}
+        {:error, %Req.TransportError{reason: reason}} ->
+          error = Error.network_error("Transport error: #{inspect(reason)}")
+          error_event = %{type: :error, data: nil, error: error}
+          callback.(error_event)
+          {:error, error}
 
-              case callback.(stream_event) do
-                :ok -> :continue
-                :stop -> throw({:stop_stream, :requested})
-              end
+        {:error, reason} ->
+          error = Error.network_error("Request failed: #{inspect(reason)}")
+          error_event = %{type: :error, data: nil, error: error}
+          callback.(error_event)
+          {:error, reason}
+      end
+    catch
+      {:stop_stream, :completed} ->
+        {:ok, :completed}
 
-              # Check if this event indicates stream completion
-              if Parser.stream_done?(event) do
-                completion_event = %{type: :complete, data: nil, error: nil}
-                callback.(completion_event)
-                throw({:stop_stream, :completed})
-              end
-            end)
+      {:stop_stream, :requested} ->
+        {:ok, :completed}
 
-            # Send completion event
+      {:stop_stream, error} ->
+        {:error, error}
+    after
+      # Always clean up persistent term
+      :persistent_term.erase(parser_ref)
+    end
+  end
+
+  # Collect error response body from streaming messages
+  defp collect_error_body(response, timeout) do
+    collect_error_body(response, timeout, "")
+  end
+
+  defp collect_error_body(response, timeout, acc) do
+    receive do
+      message ->
+        case Req.parse_message(response, message) do
+          {:ok, [{:data, chunk}]} ->
+            collect_error_body(response, timeout, acc <> chunk)
+
+          {:ok, [:done]} ->
+            acc
+
+          {:ok, other} ->
+            Logger.debug("Received other message during error collection: #{inspect(other)}")
+            collect_error_body(response, timeout, acc)
+
+          :unknown ->
+            Logger.debug("Received unknown message during error collection: #{inspect(message)}")
+            collect_error_body(response, timeout, acc)
+        end
+    after
+      timeout ->
+        Logger.warning("Timeout collecting error response body")
+        acc
+    end
+  end
+
+  # Process streaming messages in real-time
+  defp stream_loop(response, parser_ref, callback, timeout) do
+    receive do
+      message ->
+        case Req.parse_message(response, message) do
+          {:ok, [{:data, chunk}]} ->
+            Logger.debug("Received streaming chunk of size #{byte_size(chunk)}")
+
+            # Get current parser state
+            current_parser = :persistent_term.get(parser_ref)
+
+            # Process chunk immediately!
+            case Parser.parse_chunk(chunk, current_parser) do
+              {:ok, events, new_parser} ->
+                # Update parser state
+                :persistent_term.put(parser_ref, new_parser)
+
+                # Send each event immediately - TRUE STREAMING!
+                Enum.each(events, fn event ->
+                  stream_event = %{type: :data, data: event.data, error: nil}
+
+                  case callback.(stream_event) do
+                    :ok -> :continue
+                    :stop -> throw({:stop_stream, :requested})
+                  end
+
+                  # Check if this event indicates stream completion
+                  if Parser.stream_done?(event) do
+                    completion_event = %{type: :complete, data: nil, error: nil}
+                    callback.(completion_event)
+                    throw({:stop_stream, :completed})
+                  end
+                end)
+
+              {:error, error} ->
+                error_event = %{type: :error, data: nil, error: error}
+                callback.(error_event)
+            end
+
+            # Continue processing
+            stream_loop(response, parser_ref, callback, timeout)
+
+          {:ok, [:done]} ->
+            Logger.debug("Stream completed")
+
+            # Parse any remaining buffered data
+            final_parser = :persistent_term.get(parser_ref)
+
+            case Parser.finalize(final_parser) do
+              {:ok, remaining_events} ->
+                Enum.each(remaining_events, fn event ->
+                  stream_event = %{type: :data, data: event.data, error: nil}
+                  callback.(stream_event)
+                end)
+            end
+
+            # Send final completion event
             completion_event = %{type: :complete, data: nil, error: nil}
             callback.(completion_event)
             {:ok, :completed}
 
-          {:error, error} ->
-            error_event = %{type: :error, data: nil, error: error}
-            callback.(error_event)
-            {:error, error}
+          {:ok, other} ->
+            Logger.debug("Received other message: #{inspect(other)}")
+            stream_loop(response, parser_ref, callback, timeout)
+
+          :unknown ->
+            Logger.debug("Received unknown message: #{inspect(message)}")
+            stream_loop(response, parser_ref, callback, timeout)
         end
-
-      {:ok, %Req.Response{status: status, body: error_body}} ->
-        error_msg = extract_error_message(error_body) || "HTTP #{status}"
-        error = Error.http_error(status, error_msg)
+    after
+      timeout ->
+        error = Error.network_error("Stream timeout after #{timeout}ms")
         error_event = %{type: :error, data: nil, error: error}
         callback.(error_event)
-        {:error, error}
-
-      {:error, %Req.TransportError{reason: reason}} ->
-        error = Error.network_error("Transport error: #{inspect(reason)}")
-        error_event = %{type: :error, data: nil, error: error}
-        callback.(error_event)
-        {:error, error}
-
-      {:error, reason} ->
-        error = Error.network_error("Request failed: #{inspect(reason)}")
-        error_event = %{type: :error, data: nil, error: error}
-        callback.(error_event)
-        {:error, error}
+        {:error, :timeout}
     end
-  catch
-    {:stop_stream, :completed} ->
-      {:ok, :completed}
-
-    {:stop_stream, :requested} ->
-      {:ok, :completed}
-
-    {:stop_stream, error} ->
-      {:error, error}
   end
 
   @spec add_sse_params(String.t()) :: String.t()
@@ -246,16 +339,12 @@ defmodule Gemini.Client.HTTPStreaming do
     headers ++ new_headers
   end
 
-  @spec extract_error_message(any()) :: String.t() | nil
+  @spec extract_error_message(binary()) :: String.t() | nil
   defp extract_error_message(body) when is_binary(body) do
     case Jason.decode(body) do
-      {:ok, %{"error" => %{"message" => message}}} -> message
+      {:ok, %{"error" => %{"message" => message}}} when is_binary(message) -> message
       {:ok, %{"error" => error}} when is_binary(error) -> error
       _ -> nil
     end
   end
-
-  defp extract_error_message(%{"error" => %{"message" => message}}), do: message
-  defp extract_error_message(%{"error" => error}) when is_binary(error), do: error
-  defp extract_error_message(_), do: nil
 end

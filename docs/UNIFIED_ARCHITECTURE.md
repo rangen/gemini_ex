@@ -69,7 +69,7 @@ config = Gemini.Config.get()
 #   api_key: "...",           # For Gemini
 #   project_id: "...",        # For Vertex AI
 #   location: "us-central1",  # For Vertex AI
-#   model: "gemini-1.5-pro-latest"
+#   model: "gemini-2.0-flash"
 # }
 ```
 
@@ -173,7 +173,7 @@ The streaming system uses GenServer for robust session management:
   streams: %{
     "abc123..." => %{
       contents: ["Hello"],
-      opts: [model: "gemini-1.5-pro"],
+      opts: [model: "gemini-2.0-flash"],
       subscribers: [#PID<0.123.0>, #PID<0.124.0>],
       status: :active,
       started_at: ~U[2024-01-01 12:00:00Z]

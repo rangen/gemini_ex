@@ -1,7 +1,7 @@
 defmodule Gemini.IntegrationTest do
   use ExUnit.Case, async: false
 
-  @moduletag :integration
+  @moduletag :live_api
 
   describe "Models API" do
     test "lists available models" do

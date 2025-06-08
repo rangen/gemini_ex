@@ -107,7 +107,7 @@ defmodule UnifiedArchitectureDemo do
 
     # Demonstrate streaming functionality
     contents = ["Tell me about artificial intelligence"]
-    opts = [model: "gemini-1.5-pro-latest"]
+    opts = [model: "gemini-2.0-flash"]
 
     case Gemini.Streaming.Manager.start_stream(contents, opts, self()) do
       {:ok, stream_id} ->
