@@ -14,7 +14,7 @@ defmodule Gemini.MixProject do
       docs: docs(),
       description: description(),
       package: package(),
-      name: "Gemini",
+      name: "GeminiEx",
       source_url: @source_url,
       homepage_url: @source_url,
       test_coverage: [tool: ExCoveralls],
@@ -164,14 +164,14 @@ defmodule Gemini.MixProject do
 
   defp package do
     [
-      name: "gemini",
+      name: "gemini_ex",
       description: description(),
       files:
         ~w(lib mix.exs README.md ARCHITECTURE.md AUTHENTICATION_SYSTEM.md STREAMING.md STREAMING_ARCHITECTURE.md TELEMETRY_IMPLEMENTATION.md CHANGELOG.md LICENSE),
       licenses: ["MIT"],
       links: %{
         "GitHub" => @source_url,
-        "Documentation" => "https://hexdocs.pm/gemini",
+        "Documentation" => "https://hexdocs.pm/gemini_ex",
         "Changelog" => "#{@source_url}/blob/main/CHANGELOG.md"
       },
       maintainers: ["nshkrdotcom"],

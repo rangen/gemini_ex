@@ -39,3 +39,4 @@ examples/
 gemini_unified/
 
 repomix*.xml
+*.tar
