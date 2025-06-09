@@ -102,7 +102,7 @@ graph TD
 **1. Configuration Layer (`gemini/config.ex`)**
 
 *   **Purpose**: To detect and load the *default* authentication credentials for the application.
-*   **Mechanism**: The `Config.auth_config/0` function establishes a strict priority order for finding credentials:
+*   **Mechanism**: The `Gemini.Config.auth_config/0` function establishes a strict priority order for finding credentials:
     1.  **Environment Variables**: Checks for `GEMINI_API_KEY`, `VERTEX_SERVICE_ACCOUNT`, etc. This is the highest priority.
     2.  **Application Config**: If no environment variables are found, it checks for `:gemini, :auth` or `:gemini, :api_key` in the Elixir application environment (e.g., `config/runtime.exs`).
 *   **Code Example (`gemini/config.ex`):**

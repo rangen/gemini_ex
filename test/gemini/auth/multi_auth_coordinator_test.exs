@@ -11,6 +11,7 @@ defmodule Gemini.Auth.MultiAuthCoordinatorTest do
   alias Gemini.Auth.MultiAuthCoordinator
 
   describe "coordinate_auth/2" do
+    @tag :live_api
     test "coordinates gemini auth strategy successfully" do
       opts = [auth: :gemini]
 
@@ -20,6 +21,7 @@ defmodule Gemini.Auth.MultiAuthCoordinatorTest do
       assert Enum.any?(headers, fn {key, _value} -> key == "x-goog-api-key" end)
     end
 
+    @tag :live_api
     test "coordinates vertex_ai auth strategy successfully" do
       opts = [auth: :vertex_ai]
 
@@ -46,11 +48,13 @@ defmodule Gemini.Auth.MultiAuthCoordinatorTest do
   end
 
   describe "get_credentials/1" do
+    @tag :live_api
     test "retrieves gemini credentials from config" do
       assert {:ok, credentials} = MultiAuthCoordinator.get_credentials(:gemini)
       assert is_map(credentials)
     end
 
+    @tag :live_api
     test "retrieves vertex_ai credentials from config" do
       assert {:ok, credentials} = MultiAuthCoordinator.get_credentials(:vertex_ai)
       assert is_map(credentials)
@@ -80,6 +84,7 @@ defmodule Gemini.Auth.MultiAuthCoordinatorTest do
   end
 
   describe "refresh_credentials/1" do
+    @tag :live_api
     test "refreshes gemini credentials (no-op)" do
       assert {:ok, credentials} = MultiAuthCoordinator.refresh_credentials(:gemini)
       assert is_map(credentials)

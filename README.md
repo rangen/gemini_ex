@@ -5,7 +5,7 @@
 [![OTP](https://img.shields.io/badge/otp-27.3.3-blue.svg)](https://www.erlang.org)
 [![Hex.pm](https://img.shields.io/hexpm/v/gemini.svg)](https://hex.pm/packages/gemini)
 [![Documentation](https://img.shields.io/badge/docs-hexdocs-purple.svg)](https://hexdocs.pm/gemini)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/nshkrdotcom/gemini_ex/blob/main/LICENSE)
 
 A comprehensive Elixir client for Google's Gemini AI API with dual authentication support, advanced streaming capabilities, type safety, and built-in telemetry.
 
@@ -222,7 +222,7 @@ GEMINI_API_KEY="your_key" mix test --only integration
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/nshkrdotcom/gemini_ex/blob/main/LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 

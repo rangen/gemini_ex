@@ -234,7 +234,7 @@ defmodule Gemini.Client.HTTPStreaming do
             stream_loop(response, parser_ref, callback, timeout)
           end
 
-        {:error, %{reason: reason}} when is_exception(reason) ->
+        {:error, %{reason: reason}} ->
           error = Error.network_error("Transport error: #{inspect(reason)}")
           error_event = %{type: :error, data: nil, error: error}
           callback.(error_event)
