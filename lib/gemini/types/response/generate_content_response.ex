@@ -19,46 +19,48 @@ defmodule Gemini.Types.Response.GenerateContentResponse do
     field(:prompt_feedback, PromptFeedback.t() | nil, default: nil)
     field(:usage_metadata, UsageMetadata.t() | nil, default: nil)
   end
-end
 
-defmodule Gemini.Types.Response.ListModelsResponse do
-  @moduledoc """
-  Response from listing models.
+  @doc """
+  Extract text content from the response.
   """
+  @spec extract_text(t()) :: {:ok, String.t()} | {:error, String.t()}
+  def extract_text(%__MODULE__{candidates: [first_candidate | _]}) do
+    case first_candidate do
+      %{content: %{parts: [_ | _] = parts}} ->
+        text =
+          parts
+          |> Enum.filter(&Map.has_key?(&1, :text))
+          |> Enum.map_join("", & &1.text)
 
-  use TypedStruct
+        {:ok, text}
 
-  alias Gemini.Types.Response.Model
-
-  @derive Jason.Encoder
-  typedstruct do
-    field(:models, [Model.t()], default: [])
-    field(:next_page_token, String.t() | nil, default: nil)
+      _ ->
+        {:error, "No text content found in response"}
+    end
   end
-end
 
-defmodule Gemini.Types.Response.Model do
-  @moduledoc """
-  Model information.
+  def extract_text(_), do: {:error, "No candidates found in response"}
+
+  @doc """
+  Get the finish reason from the first candidate.
   """
+  @spec finish_reason(t()) :: String.t() | nil
+  def finish_reason(%__MODULE__{candidates: [%{finish_reason: reason} | _]}), do: reason
+  def finish_reason(_), do: nil
 
-  use TypedStruct
-
-  @derive Jason.Encoder
-  typedstruct do
-    field(:name, String.t(), enforce: true)
-    field(:base_model_id, String.t() | nil, default: nil)
-    field(:version, String.t(), enforce: true)
-    field(:display_name, String.t(), enforce: true)
-    field(:description, String.t(), enforce: true)
-    field(:input_token_limit, integer(), enforce: true)
-    field(:output_token_limit, integer(), enforce: true)
-    field(:supported_generation_methods, [String.t()], default: [])
-    field(:temperature, float() | nil, default: nil)
-    field(:max_temperature, float() | nil, default: nil)
-    field(:top_p, float() | nil, default: nil)
-    field(:top_k, integer() | nil, default: nil)
+  @doc """
+  Get token usage information from the response.
+  """
+  @spec token_usage(t()) :: map() | nil
+  def token_usage(%__MODULE__{usage_metadata: %{} = usage}) do
+    %{
+      total: Map.get(usage, :total_token_count),
+      input: Map.get(usage, :prompt_token_count),
+      output: Map.get(usage, :candidates_token_count)
+    }
   end
+
+  def token_usage(_), do: nil
 end
 
 defmodule Gemini.Types.Response.CountTokensResponse do

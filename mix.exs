@@ -1,53 +1,53 @@
 defmodule Gemini.MixProject do
   use Mix.Project
 
+  @version "0.0.1"
+
   def project do
     [
       app: :gemini,
-      version: "0.1.0",
+      version: @version,
       elixir: "~> 1.14",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      description: "Elixir client for Google Gemini API",
-      package: package(),
-      docs: docs()
+      docs: docs(),
+      description: "Comprehensive Elixir client for Google's Gemini API",
+      package: package()
     ]
   end
 
-  # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: [:logger],
+      extra_applications: [:logger, :crypto],
       mod: {Gemini.Application, []}
     ]
   end
 
-  # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
+      {:req, "~> 0.4"},
       {:jason, "~> 1.4"},
-      {:req, "~> 0.5"},
       {:typed_struct, "~> 0.3"},
       {:joken, "~> 2.6"},
-      {:hackney, "~> 1.18"},
       {:telemetry, "~> 1.2"},
       {:ex_doc, "~> 0.31", only: :dev, runtime: false},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
-      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false}
-    ]
-  end
-
-  defp package do
-    [
-      licenses: ["MIT"],
-      links: %{"GitHub" => "https://github.com/your_username/gemini"}
+      {:dialyxir, "~> 1.4", only: [:dev], runtime: false}
     ]
   end
 
   defp docs do
     [
       main: "Gemini",
-      extras: ["README.md"]
+      source_ref: "v#{@version}",
+      source_url: "https://github.com/nshkrdotcom/gemini_ex"
+    ]
+  end
+
+  defp package do
+    [
+      licenses: ["MIT"],
+      links: %{"GitHub" => "https://github.com/nshkrdotcom/gemini_ex"}
     ]
   end
 end

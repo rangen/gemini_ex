@@ -220,10 +220,6 @@ defmodule LiveAPITest do
           {:ok, false} ->
             IO.puts("  ❌ Model #{model_name} does not exist")
             flunk("Model should exist")
-
-          {:error, error} ->
-            IO.puts("  ❌ Model existence check failed: #{inspect(error)}")
-            flunk("Model existence check failed: #{inspect(error)}")
         end
       else
         IO.puts("❌ Vertex AI not configured, skipping test")
@@ -291,9 +287,6 @@ defmodule LiveAPITest do
         case Gemini.start_link() do
           {:ok, _} ->
             IO.puts("  ✅ Streaming manager started")
-
-          {:error, {:already_started, _pid}} ->
-            IO.puts("  ✅ Streaming manager already running")
 
           {:error, error} ->
             IO.puts("  ❌ Failed to start streaming manager: #{inspect(error)}")

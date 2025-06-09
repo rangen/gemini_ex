@@ -1,77 +1,28 @@
 defmodule Gemini do
   @moduledoc """
-  Elixir client for Google's Gemini API.
+  Main Gemini client interface.
 
-  This library provides a comprehensive interface to the Gemini API, including:
-  - Content generation (text and multimodal)
-  - Streaming responses
-  - Model management
-  - Chat sessions
-  - Token counting
-
-  ## Quick Start
-
-  First, configure your API key:
-
-      config :gemini, api_key: "your_api_key_here"
-
-  Or set the `GEMINI_API_KEY` environment variable.
-
-  Then generate content:
-
-      {:ok, response} = Gemini.generate("Hello, world!")
-      text = Gemini.extract_text(response)
-
-  ## Configuration
-
-  - `:api_key` - Your Gemini API key (required)
-  - `:base_url` - API base URL (default: Google's production URL)
-  - `:default_model` - Default model to use (default: "gemini-2.0-flash")
-  - `:timeout` - HTTP timeout in milliseconds (default: 30_000)
-
+  This module provides backward-compatible access to the Gemini API
+  while routing requests through the unified coordinator.
   """
 
-  alias Gemini.{Generate, Models}
-  alias Gemini.Config
-  alias Gemini.Types.{Content, Part}
-  alias Gemini.Types.Response.{GenerateContentResponse, Candidate}
-  alias Gemini.Streaming.ManagerV2
+  alias Gemini.APIs.Coordinator
+  alias Gemini.Error
+  alias Gemini.Types.Content
+  alias Gemini.Types.Response.GenerateContentResponse
 
   @doc """
-  Start the Gemini client.
-
-  This starts the streaming manager (HTTP client no longer needs explicit startup with Req).
-  """
-  @spec start_link() :: {:ok, :started} | {:error, term()}
-  def start_link do
-    with {:ok, _stream} <- ManagerV2.start_link() do
-      {:ok, :started}
-    end
-  end
-
-  @doc """
-  Configure the client for a specific authentication type.
-
-  ## Parameters
-    - `auth_type` - Either `:gemini` or `:vertex_ai`
-    - `credentials` - Map containing authentication credentials
+  Configure authentication for the client.
 
   ## Examples
 
-      # Configure for Gemini API
+      # Gemini API
       Gemini.configure(:gemini, %{api_key: "your_api_key"})
 
-      # Configure for Vertex AI with access token
-      Gemini.configure(:vertex_ai, %{
-        access_token: "your_token",
-        project_id: "your-project",
-        location: "us-central1"
-      })
-
-      # Configure for Vertex AI with service account
+      # Vertex AI
       Gemini.configure(:vertex_ai, %{
         service_account_key: "/path/to/key.json",
-        project_id: "your-project",
+        project_id: "your-project", 
         location: "us-central1"
       })
   """
@@ -82,245 +33,116 @@ defmodule Gemini do
   end
 
   @doc """
-  Get the current authentication configuration.
-  """
-  @spec get_auth_config() :: map() | nil
-  def get_auth_config do
-    Config.auth_config()
-  end
-
-  # Content Generation
-
-  @doc """
-  Generate content using the Gemini API.
-
-  ## Parameters
-    - `contents` - Content to generate from (string or list of Content structs)
-    - `opts` - Options for generation (see `Gemini.Generate.content/2`)
-
-  ## Examples
-
-      {:ok, response} = Gemini.generate("What is the capital of France?")
-      {:ok, text} = Gemini.extract_text(response)
-      # => "The capital of France is Paris."
-
-      # With configuration
-      config = GenerationConfig.creative()
-      {:ok, response} = Gemini.generate("Write a poem", generation_config: config)
-
-      # With multimodal content
-      contents = [
-        Content.text("What's in this image?"),
-        Content.image("path/to/image.jpg")
-      ]
-      {:ok, response} = Gemini.generate(contents)
-
+  Generate content using the configured authentication.
   """
   @spec generate(String.t() | [Content.t()], keyword()) ::
-          {:ok, GenerateContentResponse.t()} | {:error, term()}
+          {:ok, GenerateContentResponse.t()} | {:error, Error.t()}
   def generate(contents, opts \\ []) do
-    Generate.content(contents, opts)
-  end
-
-  @doc """
-  Generate content with streaming support.
-
-  Returns a list of partial responses as they become available.
-
-  ## Examples
-
-      {:ok, responses} = Gemini.stream_generate("Tell me a long story")
-      texts = Enum.map(responses, &Gemini.extract_text/1)
-
-  """
-  def stream_generate(contents, opts \\ []) do
-    Generate.stream_content(contents, opts)
-  end
-
-  @doc """
-  Start a managed streaming session using GenServer.
-
-  Returns a stream ID that can be used to subscribe to events.
-
-  ## Examples
-
-      {:ok, stream_id} = Gemini.start_stream("Write a long story")
-      :ok = Gemini.subscribe_stream(stream_id)
-
-      # Receive messages:
-      # {:stream_event, stream_id, event}
-      # {:stream_complete, stream_id}
-      # {:stream_error, stream_id, error}
-  """
-  def start_stream(contents, opts \\ []) do
-    ManagerV2.start_stream(contents, opts, self())
-  end
-
-  @doc """
-  Subscribe to events from a streaming session.
-  """
-  def subscribe_stream(stream_id, subscriber_pid \\ self()) do
-    ManagerV2.subscribe_stream(stream_id, subscriber_pid)
-  end
-
-  @doc """
-  Unsubscribe from a streaming session.
-  """
-  def unsubscribe_stream(stream_id, subscriber_pid \\ self()) do
-    ManagerV2.unsubscribe_stream(stream_id, subscriber_pid)
-  end
-
-  @doc """
-  Stop a streaming session.
-  """
-  def stop_stream(stream_id) do
-    ManagerV2.stop_stream(stream_id)
-  end
-
-  @doc """
-  Get the status of a streaming session.
-  """
-  def get_stream_status(stream_id) do
-    ManagerV2.get_stream_info(stream_id)
-  end
-
-  @doc """
-  List all active streaming sessions.
-  """
-  def list_streams do
-    ManagerV2.list_streams()
+    Coordinator.generate_content(contents, opts)
   end
 
   @doc """
   Generate text content and return only the text.
-
-  This is a convenience function for simple text generation.
-
-  ## Examples
-
-      {:ok, text} = Gemini.text("What is 2+2?")
-      # => "2 + 2 = 4"
-
   """
+  @spec text(String.t() | [Content.t()], keyword()) :: {:ok, String.t()} | {:error, Error.t()}
   def text(contents, opts \\ []) do
-    Generate.text(contents, opts)
+    case Coordinator.generate_content(contents, opts) do
+      {:ok, response} -> Coordinator.extract_text(response)
+      {:error, error} -> {:error, error}
+    end
   end
 
   @doc """
-  Count tokens in the given content.
-
-  ## Examples
-
-      {:ok, count} = Gemini.count_tokens("Hello, world!")
-      # => {:ok, %CountTokensResponse{total_tokens: 3}}
-
+  List available models.
   """
-  def count_tokens(contents, opts \\ []) do
-    Generate.count_tokens(contents, opts)
-  end
-
-  # Chat API
-
-  @doc """
-  Start a new chat session.
-
-  ## Examples
-
-      {:ok, chat} = Gemini.chat()
-      {:ok, response, chat} = Gemini.send_message(chat, "Hello!")
-
-      # With configuration
-      config = GenerationConfig.balanced()
-      {:ok, chat} = Gemini.chat(generation_config: config)
-
-  """
-  def chat(opts \\ []) do
-    Generate.chat(opts)
-  end
-
-  @doc """
-  Send a message in a chat session.
-
-  ## Examples
-
-      {:ok, chat} = Gemini.chat()
-      {:ok, response, chat} = Gemini.send_message(chat, "Hello!")
-      {:ok, response, chat} = Gemini.send_message(chat, "How are you?")
-
-  """
-  def send_message(chat, message) do
-    Generate.send_message(chat, message)
-  end
-
-  # Model Management
-
-  @doc """
-  List available Gemini models.
-
-  ## Examples
-
-      {:ok, models_response} = Gemini.list_models()
-      model_names = Enum.map(models_response.models, & &1.name)
-
-  """
+  @spec list_models(keyword()) :: {:ok, map()} | {:error, Error.t()}
   def list_models(opts \\ []) do
-    Models.list(opts)
+    Coordinator.list_models(opts)
   end
 
   @doc """
   Get information about a specific model.
-
-  ## Examples
-
-      {:ok, model} = Gemini.get_model("gemini-2.0-flash")
-
   """
+  @spec get_model(String.t()) :: {:ok, map()} | {:error, Error.t()}
   def get_model(model_name) do
-    Models.get(model_name)
+    Coordinator.get_model(model_name)
   end
 
   @doc """
-  List available model names.
-
-  ## Examples
-
-      {:ok, names} = Gemini.list_model_names()
-      # => {:ok, ["gemini-2.0-flash", "gemini-1.5-pro", ...]}
-
+  Count tokens in the given content.
   """
-  def list_model_names do
-    Models.list_names()
+  @spec count_tokens(String.t() | [Content.t()], keyword()) :: {:ok, map()} | {:error, Error.t()}
+  def count_tokens(contents, opts \\ []) do
+    Coordinator.count_tokens(contents, opts)
   end
 
   @doc """
-  Check if a model exists.
-
-  ## Examples
-
-      {:ok, true} = Gemini.model_exists?("gemini-2.0-flash")
-      {:ok, false} = Gemini.model_exists?("invalid-model")
-
+  Start a new chat session.
   """
-  def model_exists?(model_name) do
-    Models.exists?(model_name)
+  @spec chat(keyword()) :: {:ok, map()}
+  def chat(opts \\ []) do
+    {:ok, %{history: [], opts: opts}}
   end
 
-  # Utility Functions
+  @doc """
+  Send a message in a chat session.
+  """
+  @spec send_message(map(), String.t()) ::
+          {:ok, GenerateContentResponse.t(), map()} | {:error, Error.t()}
+  def send_message(chat, message) do
+    contents = [Content.text(message)]
+
+    case generate(contents, chat.opts) do
+      {:ok, response} ->
+        updated_chat = %{
+          chat
+          | history:
+              chat.history ++
+                [
+                  %{role: "user", content: message},
+                  %{role: "model", content: response}
+                ]
+        }
+
+        {:ok, response, updated_chat}
+
+      {:error, error} ->
+        {:error, error}
+    end
+  end
 
   @doc """
-  Extract text from a GenerateContentResponse.
-
-  Returns the text from the first candidate's first text part.
-
-  ## Examples
-
-      {:ok, response} = Gemini.generate("Hello")
-      {:ok, text} = Gemini.extract_text(response)
-
+  Start a managed streaming session.
   """
-  @spec extract_text(GenerateContentResponse.t()) :: {:ok, String.t()} | {:error, String.t()}
+  @spec start_stream(String.t() | [Content.t()], keyword()) ::
+          {:ok, String.t()} | {:error, Error.t()}
+  def start_stream(contents, opts \\ []) do
+    Coordinator.stream_generate_content(contents, opts)
+  end
+
+  @doc """
+  Subscribe to streaming events.
+  """
+  @spec subscribe_stream(String.t()) :: :ok | {:error, Error.t()}
+  def subscribe_stream(stream_id) do
+    Coordinator.subscribe_stream(stream_id, self())
+  end
+
+  @doc """
+  Get stream status.
+  """
+  @spec get_stream_status(String.t()) :: {:ok, map()} | {:error, Error.t()}
+  def get_stream_status(stream_id) do
+    Coordinator.stream_status(stream_id)
+  end
+
+  @doc """
+  Extract text from a GenerateContentResponse or raw streaming data.
+  """
+  @spec extract_text(GenerateContentResponse.t() | map()) ::
+          {:ok, String.t()} | {:error, String.t()}
   def extract_text(%GenerateContentResponse{
-        candidates: [%Candidate{content: %Content{parts: [%Part{text: text} | _]}} | _]
+        candidates: [%{content: %{parts: [%{text: text} | _]}} | _]
       }) do
     {:ok, text}
   end
@@ -329,67 +151,79 @@ defmodule Gemini do
     {:error, "No candidates in response"}
   end
 
-  def extract_text(%GenerateContentResponse{candidates: [%Candidate{content: nil} | _]}) do
-    {:error, "Candidate has no content"}
+  def extract_text(%GenerateContentResponse{}) do
+    {:error, "No text content found in response"}
   end
 
-  def extract_text(_) do
-    {:error, "Invalid response format"}
-  end
-
-  @doc """
-  Extract all text parts from a GenerateContentResponse.
-
-  ## Examples
-
-      {:ok, response} = Gemini.generate("Hello")
-      texts = Gemini.extract_all_text(response)
-
-  """
-  def extract_all_text(%GenerateContentResponse{candidates: candidates}) do
-    candidates
-    |> Enum.flat_map(fn %Candidate{content: content} ->
-      case content do
-        %Content{parts: parts} ->
-          parts
-          |> Enum.filter(fn part -> match?(%Part{text: text} when is_binary(text), part) end)
-          |> Enum.map(fn %Part{text: text} -> text end)
-
-        _ ->
-          []
+  # Handle raw streaming data format
+  def extract_text(%{"candidates" => [%{"content" => %{"parts" => parts}} | _]}) do
+    text =
+      parts
+      |> Enum.find(&Map.has_key?(&1, "text"))
+      |> case do
+        %{"text" => text} -> text
+        _ -> ""
       end
-    end)
+
+    {:ok, text}
+  end
+
+  def extract_text(_), do: {:error, "Invalid response format"}
+
+  @doc """
+  Check if a model exists.
+  """
+  @spec model_exists?(String.t()) :: {:ok, boolean()}
+  def model_exists?(model_name) do
+    case get_model(model_name) do
+      {:ok, _model} -> {:ok, true}
+      {:error, _} -> {:ok, false}
+    end
   end
 
   @doc """
-  Create a multimodal prompt with text and images.
-
-  ## Examples
-
-      prompt = Gemini.multimodal_prompt(
-        "What's in these images?",
-        ["image1.jpg", "image2.png"]
-      )
-      {:ok, response} = Gemini.generate(prompt)
-
+  Generate content with streaming response (synchronous collection).
   """
-  def multimodal_prompt(text, image_paths) when is_list(image_paths) do
-    image_contents = Enum.map(image_paths, &Content.image/1)
-    [Content.text(text)] ++ image_contents
+  @spec stream_generate(String.t() | [Content.t()], keyword()) ::
+          {:ok, [map()]} | {:error, Error.t()}
+  def stream_generate(contents, opts \\ []) do
+    case start_stream(contents, opts) do
+      {:ok, stream_id} ->
+        :ok = subscribe_stream(stream_id)
+        collect_stream_responses(stream_id, [])
+
+      {:error, error} ->
+        {:error, error}
+    end
   end
 
   @doc """
-  Create a system-instructed prompt.
-
-  ## Examples
-
-      {:ok, response} = Gemini.generate(
-        "What is the capital of France?",
-        system_instruction: "You are a helpful geography teacher."
-      )
-
+  Start the streaming manager (for compatibility).
   """
-  def with_system_instruction(contents, instruction) do
-    Generate.content(contents, system_instruction: instruction)
+  @spec start_link() :: {:ok, pid()} | {:error, term()}
+  def start_link do
+    # The UnifiedManager is started automatically with the application
+    # This function is for compatibility with tests
+    case Process.whereis(Gemini.Streaming.UnifiedManager) do
+      nil -> {:error, :not_started}
+      pid -> {:ok, pid}
+    end
+  end
+
+  # Helper function to collect streaming responses
+  defp collect_stream_responses(stream_id, acc) do
+    receive do
+      {:stream_event, ^stream_id, %{type: :data, data: data}} ->
+        collect_stream_responses(stream_id, [data | acc])
+
+      {:stream_complete, ^stream_id} ->
+        {:ok, Enum.reverse(acc)}
+
+      {:stream_error, ^stream_id, error} ->
+        {:error, error}
+    after
+      30_000 ->
+        {:error, "Stream timeout"}
+    end
   end
 end

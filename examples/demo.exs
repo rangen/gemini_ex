@@ -9,7 +9,15 @@ Mix.install([
 ])
 
 defmodule GeminiDemo do
-  alias Gemini.Types.{GenerationConfig, SafetySetting}
+  alias Gemini.Types.GenerationConfig
+
+  defp format_error(error) do
+    cond do
+      is_map(error) and Map.has_key?(error, "message") -> error["message"]
+      is_binary(error) -> error
+      true -> inspect(error)
+    end
+  end
 
   def run do
     IO.puts("🤖 Gemini Elixir Client Demo")
@@ -40,27 +48,34 @@ defmodule GeminiDemo do
     IO.puts("Listing available models...")
     case Gemini.list_models() do
       {:ok, response} ->
-        IO.puts("Found #{length(response.models)} models:")
-        response.models
+        models = Map.get(response, "models", [])
+        IO.puts("Found #{length(models)} models:")
+        models
         |> Enum.take(3)
         |> Enum.each(fn model ->
-          IO.puts("  • #{model.display_name} (#{model.name})")
-          IO.puts("    Input limit: #{format_number(model.input_token_limit)} tokens")
-          IO.puts("    Output limit: #{format_number(model.output_token_limit)} tokens")
+          display_name = Map.get(model, "displayName", "Unknown")
+          name = Map.get(model, "name", "Unknown")
+          input_limit = Map.get(model, "inputTokenLimit", 0)
+          output_limit = Map.get(model, "outputTokenLimit", 0)
+          IO.puts("  • #{display_name} (#{name})")
+          IO.puts("    Input limit: #{format_number(input_limit)} tokens")
+          IO.puts("    Output limit: #{format_number(output_limit)} tokens")
         end)
 
       {:error, error} ->
-        IO.puts("❌ Error listing models: #{error.message}")
+        IO.puts("❌ Error listing models: #{format_error(error)}")
     end
 
     IO.puts("\nChecking specific model...")
     case Gemini.get_model("gemini-2.0-flash") do
       {:ok, model} ->
-        IO.puts("✅ Found #{model.display_name}")
-        IO.puts("   #{model.description}")
+        display_name = Map.get(model, "displayName", "Unknown")
+        description = Map.get(model, "description", "No description")
+        IO.puts("✅ Found #{display_name}")
+        IO.puts("   #{description}")
 
       {:error, error} ->
-        IO.puts("❌ Error getting model: #{error.message}")
+        IO.puts("❌ Error getting model: #{format_error(error)}")
     end
   end
 
@@ -81,7 +96,7 @@ defmodule GeminiDemo do
           IO.puts("🤖 Response: #{text}")
 
         {:error, error} ->
-          IO.puts("❌ Error: #{error.message}")
+          IO.puts("❌ Error: #{format_error(error)}")
       end
 
       IO.puts("")
@@ -100,7 +115,7 @@ defmodule GeminiDemo do
         IO.puts("🤖 #{text}")
 
       {:error, error} ->
-        IO.puts("❌ Error: #{error.message}")
+        IO.puts("❌ Error: #{format_error(error)}")
     end
 
     # Precise mode
@@ -112,31 +127,42 @@ defmodule GeminiDemo do
         IO.puts("🤖 #{text}")
 
       {:error, error} ->
-        IO.puts("❌ Error: #{error.message}")
+        IO.puts("❌ Error: #{format_error(error)}")
     end
   end
 
   defp demo_chat_session do
     section("Chat Session")
 
-    case Gemini.chat() do
-      {:ok, chat} ->
-        IO.puts("💬 Starting chat session...")
+    {:ok, chat} = Gemini.chat()
+    IO.puts("💬 Starting chat session...")
 
-        # First message
-        {:ok, response, chat} = Gemini.send_message(chat, "Hi! I'm learning about Elixir. Can you help?")
-        {:ok, text} = Gemini.extract_text(response)
-        IO.puts("🧑 User: Hi! I'm learning about Elixir. Can you help?")
-        IO.puts("🤖 Assistant: #{text}")
-
-        # Follow-up message
-        {:ok, response, _chat} = Gemini.send_message(chat, "What's the difference between processes and threads in Elixir?")
-        {:ok, text} = Gemini.extract_text(response)
-        IO.puts("\n🧑 User: What's the difference between processes and threads in Elixir?")
-        IO.puts("🤖 Assistant: #{text}")
-
+    # First message
+    case Gemini.send_message(chat, "Hi! I'm learning about Elixir. Can you help?") do
+      {:ok, response, chat} ->
+        case Gemini.extract_text(response) do
+          {:ok, text} ->
+            IO.puts("🧑 User: Hi! I'm learning about Elixir. Can you help?")
+            IO.puts("🤖 Assistant: #{text}")
+            
+            # Follow-up message
+            case Gemini.send_message(chat, "What's the difference between processes and threads in Elixir?") do
+              {:ok, response, _chat} ->
+                case Gemini.extract_text(response) do
+                  {:ok, text} ->
+                    IO.puts("\n🧑 User: What's the difference between processes and threads in Elixir?")
+                    IO.puts("🤖 Assistant: #{text}")
+                  {:error, error} ->
+                    IO.puts("❌ Error extracting text: #{format_error(error)}")
+                end
+              {:error, error} ->
+                IO.puts("❌ Error in follow-up message: #{format_error(error)}")
+            end
+          {:error, error} ->
+            IO.puts("❌ Error extracting text: #{format_error(error)}")
+        end
       {:error, error} ->
-        IO.puts("❌ Error starting chat: #{error.message}")
+        IO.puts("❌ Error sending message: #{format_error(error)}")
     end
   end
 
@@ -152,11 +178,12 @@ defmodule GeminiDemo do
     Enum.each(texts, fn text ->
       case Gemini.count_tokens(text) do
         {:ok, count} ->
+          total_tokens = Map.get(count, "totalTokens", 0)
           IO.puts("📝 Text: \"#{String.slice(text, 0, 50)}#{if String.length(text) > 50, do: "...", else: ""}\"")
-          IO.puts("🔢 Tokens: #{count.total_tokens}")
+          IO.puts("🔢 Tokens: #{total_tokens}")
 
         {:error, error} ->
-          IO.puts("❌ Error counting tokens: #{error.message}")
+          IO.puts("❌ Error counting tokens: #{format_error(error)}")
       end
 
       IO.puts("")

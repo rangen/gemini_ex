@@ -268,6 +268,71 @@ defmodule Gemini.Config do
     end
   end
 
+  @doc """
+  Get authentication configuration for a specific strategy.
+
+  ## Parameters
+  - `strategy`: The authentication strategy (`:gemini` or `:vertex_ai`)
+
+  ## Returns
+  - A map containing configuration for the specified strategy
+  - Returns empty map if no configuration found
+
+  ## Examples
+
+      iex> Gemini.Config.get_auth_config(:gemini)
+      %{api_key: "your_api_key"}
+      
+      iex> Gemini.Config.get_auth_config(:vertex_ai)
+      %{project_id: "your-project", location: "us-central1"}
+  """
+  @spec get_auth_config(:gemini | :vertex_ai) :: map()
+  def get_auth_config(:gemini) do
+    case gemini_api_key() do
+      nil ->
+        # Check application config
+        case Application.get_env(:gemini, :api_key) do
+          nil -> %{}
+          api_key -> %{api_key: api_key}
+        end
+
+      api_key ->
+        %{api_key: api_key}
+    end
+  end
+
+  def get_auth_config(:vertex_ai) do
+    config = %{}
+
+    # Add project_id if available
+    config =
+      case vertex_project_id() do
+        nil -> config
+        project_id -> Map.put(config, :project_id, project_id)
+      end
+
+    # Add location
+    config = Map.put(config, :location, vertex_location())
+
+    # Add authentication method
+    cond do
+      vertex_access_token() ->
+        Map.put(config, :access_token, vertex_access_token())
+
+      vertex_service_account() ->
+        Map.put(config, :service_account_key, vertex_service_account())
+
+      true ->
+        # Check application config
+        app_config = Application.get_env(:gemini, :vertex_ai, %{})
+        Map.merge(config, app_config)
+    end
+  end
+
+  def get_auth_config(_strategy) do
+    %{}
+  end
+
   # Private functions for environment variable access
 
   defp gemini_api_key do

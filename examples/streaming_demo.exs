@@ -1,7 +1,11 @@
 #!/usr/bin/env elixir
 
 # Simple Live Streaming Demo
-# Usage: mix run streaming_demo.exs
+# Usage: elixir streaming_demo.exs
+
+Mix.install([
+  {:gemini, path: "."}
+])
 
 defmodule StreamingDemo do
   def run do
@@ -44,7 +48,7 @@ defmodule StreamingDemo do
     prompt = "Write a short creative story about a robot learning to paint. Make it about 3 paragraphs."
     
     IO.puts("\n📝 Prompt: #{prompt}")
-    IO.puts("\n🚀 Starting stream...\n")
+    IO.puts("\n🚀 Starting real-time stream...\n")
     
     case Gemini.start_stream(prompt) do
       {:ok, stream_id} ->

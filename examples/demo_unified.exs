@@ -102,40 +102,36 @@ defmodule UnifiedArchitectureDemo do
         IO.puts("Gemini application started")
       {:error, error} ->
         IO.puts("Failed to start application: #{inspect(error)}")
-        return
+        :error
     end
 
-    # Demonstrate streaming functionality
-    contents = ["Tell me about artificial intelligence"]
+    # Demonstrate streaming functionality using the new unified coordinator
+    contents = "Tell me about artificial intelligence"
     opts = [model: "gemini-2.0-flash"]
 
-    case Gemini.Streaming.Manager.start_stream(contents, opts, self()) do
+    case Gemini.APIs.Coordinator.stream_generate_content(contents, opts) do
       {:ok, stream_id} ->
         IO.puts("Started stream: #{stream_id}")
 
-        # List active streams
-        streams = Gemini.Streaming.Manager.list_streams()
-        IO.puts("Active streams: #{length(streams)}")
-
-        # Get stream info
-        case Gemini.Streaming.Manager.get_stream_info(stream_id) do
-          {:ok, info} ->
-            IO.puts("Stream status: #{info.status}")
-          {:error, error} ->
-            IO.puts("Stream info error: #{error}")
-        end
-
-        # Subscribe another process
-        subscriber = spawn(fn -> :ok end)
-        case Gemini.Streaming.Manager.subscribe_stream(stream_id, subscriber) do
+        # Subscribe to the stream  
+        case Gemini.APIs.Coordinator.subscribe_stream(stream_id, self()) do
           :ok ->
-            IO.puts("Additional subscriber added")
+            IO.puts("Subscribed to stream")
           {:error, error} ->
             IO.puts("Subscription error: #{error}")
         end
 
-        # Stop the stream
-        case Gemini.Streaming.Manager.stop_stream(stream_id) do
+        # Get stream status
+        case Gemini.APIs.Coordinator.stream_status(stream_id) do
+          {:ok, status} ->
+            IO.puts("Stream status: #{status}")
+          {:error, error} ->
+            IO.puts("Stream status error: #{error}")
+        end
+
+        # Stop the stream after a brief moment
+        Process.sleep(100)
+        case Gemini.APIs.Coordinator.stop_stream(stream_id) do
           :ok ->
             IO.puts("Stream stopped successfully")
           {:error, error} ->
