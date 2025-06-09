@@ -136,16 +136,7 @@ graph LR
     class APPSUP,SUP primary
     class GAPI,VAI api
 
-    %% Subgraph styling
-    style "Application Layer" fill:#F9FAFB,stroke:#6B46C1,stroke-width:3px
-    style "Coordination Layer" fill:#FEFEFE,stroke:#10B981,stroke-width:3px
-    style "Client Layer" fill:#F3F4F6,stroke:#9333EA,stroke-width:3px
-    style "API Layer" fill:#F8FAFC,stroke:#A855F7,stroke-width:3px
-    style "Streaming System" fill:#F9FAFB,stroke:#9333EA,stroke-width:3px
-    style "Authentication System" fill:#FEFEFE,stroke:#F59E0B,stroke-width:3px
-    style "Infrastructure" fill:#F3F4F6,stroke:#3B82F6,stroke-width:3px
-    style "Application Supervision" fill:#F8FAFC,stroke:#6B46C1,stroke-width:3px
-    style "External Services" fill:#F9FAFB,stroke:#EF4444,stroke-width:3px
+
 ```
 
 ## Core Components
