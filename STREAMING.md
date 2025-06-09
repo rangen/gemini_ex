@@ -28,7 +28,7 @@ graph TD
     %% Detailed Internal Flow
     subgraph S1 [" "]
         direction TB
-        ST1[🌐 HTTP Streaming Process]
+        ST1[HTTP Streaming Process]
         HTTPClient --> |spawn process| StreamProcess[Stream Process]
         StreamProcess --> |do_stream| DoStream[Execute HTTP Request]
         DoStream --> |Response Body| ParseBody[Parse Complete Body]
@@ -37,7 +37,7 @@ graph TD
     
     subgraph S2 [" "]
         direction TB
-        ST2[⚡ SSE Parser State]
+        ST2[SSE Parser State]
         Parser --> Buffer[String Buffer]
         Parser --> Events[Parsed Events]
         Buffer --> |extract_events| EventList[Event List]
@@ -46,7 +46,7 @@ graph TD
     
     subgraph S3 [" "]
         direction TB
-        ST3[🔄 Manager State]
+        ST3[Manager State]
         Manager --> StreamMap[Stream State Map]
         Manager --> Subscribers[Subscriber List]
         StreamMap --> StreamState[Individual Stream State]

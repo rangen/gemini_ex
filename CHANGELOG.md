@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.2] - 2025-06-09
+
+### Fixed
+- **Documentation Rendering**: Fixed mermaid diagram rendering errors on hex docs by removing emoji characters from diagram labels
+- **Package Links**: Removed redundant "Documentation" link in hex package configuration, keeping only "Online documentation"
+- **Configuration References**: Updated TELEMETRY_IMPLEMENTATION.md to reference `:gemini_ex` instead of `:gemini` for correct application configuration
+
+### Changed
+- Improved hex docs compatibility for better rendering of documentation diagrams
+- Enhanced documentation consistency across all markdown files
+
 ## [0.0.1] - 2025-06-09
 
 ### Added
@@ -108,4 +119,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Minimal latency overhead
 - Concurrent request processing
 
+[0.0.2]: https://github.com/nshkrdotcom/gemini_ex/releases/tag/v0.0.2
 [0.0.1]: https://github.com/nshkrdotcom/gemini_ex/releases/tag/v0.0.1

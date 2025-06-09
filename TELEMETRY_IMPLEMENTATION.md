@@ -43,7 +43,7 @@ The Gemini library now includes comprehensive telemetry instrumentation that emi
 #### 1. **Configurable Telemetry**
 ```elixir
 # Enable/disable telemetry (default: enabled)
-config :gemini, telemetry_enabled: true
+config :gemini_ex, telemetry_enabled: true
 
 # Check status
 Gemini.Config.telemetry_enabled?()
@@ -218,10 +218,10 @@ end
 ### Enable/Disable Telemetry
 ```elixir
 # In config/config.exs
-config :gemini, telemetry_enabled: true  # default
+config :gemini_ex, telemetry_enabled: true  # default
 
 # Or at runtime
-Application.put_env(:gemini, :telemetry_enabled, false)
+Application.put_env(:gemini_ex, :telemetry_enabled, false)
 ```
 
 ### Custom Telemetry Handlers

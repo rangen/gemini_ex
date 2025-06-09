@@ -106,7 +106,7 @@ graph LR
     
     subgraph S1 [" "]
         direction TB
-        ST1[🔄 Stream State Management]
+        ST1[Stream State Management]
         B
         L[Process Monitors]
         M[Resource Cleanup]
@@ -115,7 +115,7 @@ graph LR
     
     subgraph S2 [" "]
         direction TB
-        ST2[🌐 HTTP Layer]
+        ST2[HTTP Layer]
         C
         E
         O[Connection Pool]
@@ -124,7 +124,7 @@ graph LR
     
     subgraph S3 [" "]
         direction TB
-        ST3[⚡ SSE Processing]
+        ST3[SSE Processing]
         D
         J
         K

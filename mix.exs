@@ -1,7 +1,7 @@
 defmodule Gemini.MixProject do
   use Mix.Project
 
-  @version "0.0.1"
+  @version "0.0.2"
   @source_url "https://github.com/nshkrdotcom/gemini_ex"
 
   def project do
@@ -171,7 +171,7 @@ defmodule Gemini.MixProject do
       licenses: ["MIT"],
       links: %{
         "GitHub" => @source_url,
-        "Documentation" => "https://hexdocs.pm/gemini_ex",
+        "Online documentation" => "https://hexdocs.pm/gemini_ex",
         "Changelog" => "#{@source_url}/blob/main/CHANGELOG.md"
       },
       maintainers: ["nshkrdotcom"],
