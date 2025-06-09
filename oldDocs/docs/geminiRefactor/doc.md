@@ -387,13 +387,13 @@ end
 
 ```elixir
 # config/prod.exs
-config :gemini,
+config :gemini_ex,
   api_key: System.get_env("GEMINI_API_KEY"),
   timeout: 30_000,
   telemetry_enabled: true
 
 # Optional: Configure rate limiting
-config :gemini, :rate_limit,
+config :gemini_ex, :rate_limit,
   max_requests: 100,
   time_window: 60_000  # 1 minute
 ```

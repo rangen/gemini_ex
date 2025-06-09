@@ -118,7 +118,7 @@ end
 #### Multi-Auth Configuration
 ```elixir
 # config/config.exs
-config :gemini,
+config :gemini_ex,
   # Default auth strategy when none specified
   default_auth: :gemini,
   

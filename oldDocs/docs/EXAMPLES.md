@@ -11,7 +11,7 @@ export GEMINI_API_KEY="your_api_key_here"
 
 Or in your config:
 ```elixir
-config :gemini, api_key: "your_api_key_here"
+config :gemini_ex, api_key: "your_api_key_here"
 ```
 
 ## Examples

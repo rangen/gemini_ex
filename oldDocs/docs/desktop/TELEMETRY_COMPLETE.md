@@ -39,7 +39,7 @@ I have successfully implemented comprehensive telemetry instrumentation for the 
 #### Configuration Support:
 ```elixir
 # Enable/disable telemetry (default: enabled)
-config :gemini, telemetry_enabled: true
+config :gemini_ex, telemetry_enabled: true
 
 # Runtime check
 Gemini.Config.telemetry_enabled?() # => true

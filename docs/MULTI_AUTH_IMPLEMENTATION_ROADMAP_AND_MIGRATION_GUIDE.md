@@ -137,7 +137,7 @@ assert length(results) == 3
 #### Current Usage (Single Auth)
 ```elixir
 # Before: Single auth strategy per application
-config :gemini, api_key: "your_api_key"
+config :gemini_ex, api_key: "your_api_key"
 
 # Usage was simple but limited
 {:ok, response} = Gemini.generate("Hello")
@@ -146,7 +146,7 @@ config :gemini, api_key: "your_api_key"
 #### New Usage (Multi-Auth)
 ```elixir
 # After: Multiple auth strategies available
-config :gemini,
+config :gemini_ex,
   gemini: %{api_key: "your_gemini_key"},
   vertex_ai: %{
     project_id: "your-project",
@@ -166,12 +166,12 @@ config :gemini,
 #### Step 1: Update Configuration
 ```elixir
 # Old config/config.exs
-config :gemini,
+config :gemini_ex,
   api_key: "your_api_key",
   timeout: 30_000
 
 # New config/config.exs
-config :gemini,
+config :gemini_ex,
   # Gemini API configuration
   gemini: %{
     api_key: {:system, "GEMINI_API_KEY"},
@@ -225,10 +225,10 @@ Task.async(fn -> Gemini.generate("Task 2", auth: :vertex_ai) end)
 #### Configuration Compatibility
 ```elixir
 # Old single-auth config still works
-config :gemini, api_key: "your_key"
+config :gemini_ex, api_key: "your_key"
 
 # Automatically mapped to:
-config :gemini,
+config :gemini_ex,
   gemini: %{api_key: "your_key"},
   default_auth: :gemini
 ```
@@ -403,7 +403,7 @@ import Config
 if config_env() == :prod do
   # Gemini API configuration
   if gemini_api_key = System.get_env("GEMINI_API_KEY") do
-    config :gemini, :gemini, %{
+    config :gemini_ex, :gemini, %{
       api_key: gemini_api_key,
       timeout: 30_000
     }
@@ -415,7 +415,7 @@ if config_env() == :prod do
   
   cond do
     service_account = System.get_env("VERTEX_SERVICE_ACCOUNT") ->
-      config :gemini, :vertex_ai, %{
+      config :gemini_ex, :vertex_ai, %{
         project_id: vertex_project,
         location: vertex_location,
         service_account_key: service_account,
@@ -423,7 +423,7 @@ if config_env() == :prod do
       }
     
     access_token = System.get_env("VERTEX_ACCESS_TOKEN") ->
-      config :gemini, :vertex_ai, %{
+      config :gemini_ex, :vertex_ai, %{
         project_id: vertex_project,
         location: vertex_location,
         access_token: access_token,
@@ -443,7 +443,7 @@ if config_env() == :prod do
     _ -> :gemini  # Safe default
   end
   
-  config :gemini,
+  config :gemini_ex,
     default_auth: default_auth,
     telemetry_enabled: true
 end
@@ -484,7 +484,7 @@ Gemini.Auth.MultiAuthCoordinator.validate_auth_config(:gemini)
 3. **Add missing configuration**:
    ```elixir
    # In config/config.exs or runtime.exs
-   config :gemini,
+   config :gemini_ex,
      gemini: %{api_key: "your_key_here"}
    ```
 
@@ -574,7 +574,7 @@ IO.puts("Auth coordination took #{time} microseconds")
 2. **Optimize default auth strategy**:
    ```elixir
    # Use faster auth strategy as default
-   config :gemini, default_auth: :gemini
+   config :gemini_ex, default_auth: :gemini
    ```
 
 3. **Use strategy-specific clients**:

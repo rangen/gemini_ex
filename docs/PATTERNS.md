@@ -136,12 +136,12 @@ Gemini.generate("Hello", auth: :vertex_ai)
 
 ### Before:
 ```elixir
-config :gemini, api_key: "..."
+config :gemini_ex, api_key: "..."
 ```
 
 ### After:
 ```elixir
-config :gemini,
+config :gemini_ex,
   gemini: %{api_key: "..."},
   vertex_ai: %{project_id: "...", location: "..."},
   default_auth: :gemini

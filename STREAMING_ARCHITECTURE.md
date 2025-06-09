@@ -873,7 +873,7 @@ end
 #### **Configuration Management**
 ```elixir
 # config/prod.exs
-config :gemini,
+config :gemini_ex,
   streaming: [
     max_concurrent_streams: 200,
     default_timeout: 45_000,
@@ -1422,7 +1422,7 @@ end
 #### **Step 1: Parallel Deployment (Week 1-2)**
 ```elixir
 # config/config.exs
-config :gemini,
+config :gemini_ex,
   streaming_version: :v1,  # Keep existing for now
   enable_v2_preview: true  # Enable V2 for testing
 ```
@@ -1455,7 +1455,7 @@ end
 #### **Step 4: Full Migration (Week 9-10)**
 ```elixir
 # Remove V1 code and feature flags
-config :gemini,
+config :gemini_ex,
   streaming_version: :v2  # Default for all users
 ```
 
@@ -1474,10 +1474,10 @@ config :gemini,
 #### **Configuration Changes**
 ```elixir
 # V1
-config :gemini, streaming_timeout: 30_000
+config :gemini_ex, streaming_timeout: 30_000
 
 # V2
-config :gemini,
+config :gemini_ex,
   streaming: [
     max_concurrent_streams: 100,
     default_timeout: 30_000,

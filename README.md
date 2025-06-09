@@ -27,7 +27,7 @@ Add `gemini` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:gemini, "~> 0.0.1"}
+    {:gemini_ex, "~> 0.0.2"}
   ]
 end
 ```
@@ -41,7 +41,7 @@ Configure your API key in `config/runtime.exs`:
 ```elixir
 import Config
 
-config :gemini,
+config :gemini_ex,
   api_key: System.get_env("GEMINI_API_KEY")
 ```
 
@@ -109,7 +109,7 @@ history = Gemini.get_conversation_history(session)
 export GEMINI_API_KEY="your_api_key"
 
 # Application config
-config :gemini, api_key: "your_api_key"
+config :gemini_ex, api_key: "your_api_key"
 
 # Per-request override
 Gemini.generate("Hello", api_key: "specific_key")
@@ -124,7 +124,7 @@ export VERTEX_PROJECT_ID="your-gcp-project"
 export VERTEX_LOCATION="us-central1"
 
 # Application config
-config :gemini, :auth,
+config :gemini_ex, :auth,
   type: :vertex_ai,
   credentials: %{
     service_account_key: System.get_env("VERTEX_SERVICE_ACCOUNT"),

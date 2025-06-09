@@ -237,7 +237,7 @@ Configure the library in your project's `config/runtime.exs` file. This is the c
     import Config
 
     # Best practice: Read from an environment variable
-    config :gemini,
+    config :gemini_ex,
       api_key: System.fetch_env!("GEMINI_API_KEY")
     ```
 
@@ -246,7 +246,7 @@ Configure the library in your project's `config/runtime.exs` file. This is the c
     # config/runtime.exs
     import Config
 
-    config :gemini, :auth,
+    config :gemini_ex, :auth,
       type: :vertex_ai,
       credentials: %{
         service_account_key: System.fetch_env!("VERTEX_SERVICE_ACCOUNT_PATH"),

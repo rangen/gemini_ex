@@ -60,7 +60,7 @@ mix hex.publish package
 1. **Test the package locally** in a separate project:
    ```elixir
    def deps do
-     [{:gemini, path: "/path/to/local/gemini_ex"}]
+     [{:gemini_ex, path: "/path/to/local/gemini_ex"}]
    end
    ```
 

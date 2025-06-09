@@ -245,7 +245,7 @@ Add a configuration option to enable/disable telemetry:
 
 ```elixir
 # In config.exs
-config :gemini,
+config :gemini_ex,
   telemetry_enabled: true  # default: true
 ```
 

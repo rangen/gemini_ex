@@ -151,10 +151,10 @@ Telemetry can be configured via application environment:
 
 ```elixir
 # Enable telemetry (default)
-config :gemini, telemetry_enabled: true
+config :gemini_ex, telemetry_enabled: true
 
 # Disable telemetry
-config :gemini, telemetry_enabled: false
+config :gemini_ex, telemetry_enabled: false
 ```
 
 ## Compliance Summary
