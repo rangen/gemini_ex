@@ -37,16 +37,16 @@ defmodule Gemini.MixProject do
   defp deps do
     [
       # Core dependencies
-      {:req, "~> 0.4.0"},
-      {:jason, "~> 1.4"},
+      {:req, "~> 0.5.10"},
+      {:jason, "~> 1.4.4"},
       {:typed_struct, "~> 0.3.0"},
-      {:joken, "~> 2.6"},
-      {:telemetry, "~> 1.2"},
+      {:joken, "~> 2.6.2"},
+      {:telemetry, "~> 1.3.0"},
 
       # Development and testing
-      {:ex_doc, "~> 0.31", only: :dev, runtime: false},
-      {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
-      {:dialyxir, "~> 1.4", only: [:dev], runtime: false}
+      {:ex_doc, "~> 0.38.2", only: :dev, runtime: false},
+      {:credo, "~> 1.7.12", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 1.4.5", only: [:dev], runtime: false}
     ]
   end
 
