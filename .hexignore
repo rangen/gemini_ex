@@ -1,0 +1,41 @@
+# Hex.pm configuration
+# Files to exclude from the package
+
+# Development files
+.DS_Store
+.elixir_ls/
+.vscode/
+_build/
+deps/
+.git/
+.gitignore
+
+# Documentation build artifacts  
+doc/
+docs/
+
+# Test files
+test/
+
+# Development scripts
+*.sh
+
+# Configuration files
+config/
+
+# Planning and development docs
+PLAN*.md
+IDEAS*.md
+CLAUDE.md
+*.xml
+
+# Old documentation
+oldDocs/
+
+# Examples directory (should be included in docs instead)
+examples/
+
+# Temporary directories
+gemini_unified/
+
+repomix*.xml
