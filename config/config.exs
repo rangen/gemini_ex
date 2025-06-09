@@ -1,7 +1,7 @@
 import Config
 
 # Configure the Gemini client
-config :gemini,
+config :gemini_ex,
   # Default model to use if not specified
   default_model: "gemini-2.0-flash",
 

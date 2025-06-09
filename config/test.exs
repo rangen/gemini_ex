@@ -1,7 +1,7 @@
 import Config
 
 # Test configuration
-config :gemini,
+config :gemini_ex,
   # Disable telemetry in tests
   telemetry_enabled: false,
 

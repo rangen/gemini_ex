@@ -6,7 +6,7 @@ defmodule Gemini.MixProject do
 
   def project do
     [
-      app: :gemini,
+      app: :gemini_ex,
       version: @version,
       elixir: "~> 1.14",
       start_permanent: Mix.env() == :prod,

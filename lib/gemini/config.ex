@@ -25,7 +25,7 @@ defmodule Gemini.Config do
       :gemini ->
         %{
           auth_type: :gemini,
-          api_key: gemini_api_key() || Application.get_env(:gemini, :api_key),
+          api_key: gemini_api_key() || Application.get_env(:gemini_ex, :api_key),
           model: default_model()
         }
 
@@ -136,10 +136,10 @@ defmodule Gemini.Config do
 
       true ->
         # Check application config
-        case Application.get_env(:gemini, :auth) do
+        case Application.get_env(:gemini_ex, :auth) do
           nil ->
             # Default to looking for basic API key config
-            case Application.get_env(:gemini, :api_key) do
+            case Application.get_env(:gemini_ex, :api_key) do
               nil -> nil
               api_key -> %{type: :gemini, credentials: %{api_key: api_key}}
             end
@@ -155,21 +155,21 @@ defmodule Gemini.Config do
   (Legacy function for backward compatibility)
   """
   def api_key do
-    gemini_api_key() || Application.get_env(:gemini, :api_key)
+    gemini_api_key() || Application.get_env(:gemini_ex, :api_key)
   end
 
   @doc """
   Get the default model to use.
   """
   def default_model do
-    Application.get_env(:gemini, :default_model, @default_model)
+    Application.get_env(:gemini_ex, :default_model, @default_model)
   end
 
   @doc """
   Get HTTP timeout in milliseconds.
   """
   def timeout do
-    Application.get_env(:gemini, :timeout, 30_000)
+    Application.get_env(:gemini_ex, :timeout, 30_000)
   end
 
   @doc """
@@ -262,7 +262,7 @@ defmodule Gemini.Config do
   """
   @spec telemetry_enabled? :: boolean()
   def telemetry_enabled? do
-    case Application.get_env(:gemini, :telemetry_enabled) do
+    case Application.get_env(:gemini_ex, :telemetry_enabled) do
       false -> false
       _ -> true
     end
@@ -282,7 +282,7 @@ defmodule Gemini.Config do
 
       iex> Gemini.Config.get_auth_config(:gemini)
       %{api_key: "your_api_key"}
-      
+
       iex> Gemini.Config.get_auth_config(:vertex_ai)
       %{project_id: "your-project", location: "us-central1"}
   """
@@ -291,7 +291,7 @@ defmodule Gemini.Config do
     case gemini_api_key() do
       nil ->
         # Check application config
-        case Application.get_env(:gemini, :api_key) do
+        case Application.get_env(:gemini_ex, :api_key) do
           nil -> %{}
           api_key -> %{api_key: api_key}
         end
@@ -324,7 +324,7 @@ defmodule Gemini.Config do
 
       true ->
         # Check application config
-        app_config = Application.get_env(:gemini, :vertex_ai, %{})
+        app_config = Application.get_env(:gemini_ex, :vertex_ai, %{})
         Map.merge(config, app_config)
     end
   end

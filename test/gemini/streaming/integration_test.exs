@@ -138,8 +138,8 @@ defmodule Gemini.StreamingIntegrationTest do
 
     test "requires authentication to start stream" do
       # Save original state
-      original_config = Application.get_env(:gemini, :auth)
-      original_api_key = Application.get_env(:gemini, :api_key)
+      original_config = Application.get_env(:gemini_ex, :auth)
+      original_api_key = Application.get_env(:gemini_ex, :api_key)
       original_gemini_key = System.get_env("GEMINI_API_KEY")
       original_vertex_token = System.get_env("VERTEX_ACCESS_TOKEN")
       original_vertex_service = System.get_env("VERTEX_SERVICE_ACCOUNT")
@@ -148,8 +148,8 @@ defmodule Gemini.StreamingIntegrationTest do
       original_google_project = System.get_env("GOOGLE_CLOUD_PROJECT")
 
       # Clear all auth sources
-      Application.delete_env(:gemini, :auth)
-      Application.delete_env(:gemini, :api_key)
+      Application.delete_env(:gemini_ex, :auth)
+      Application.delete_env(:gemini_ex, :api_key)
       System.delete_env("GEMINI_API_KEY")
       System.delete_env("VERTEX_ACCESS_TOKEN")
       System.delete_env("VERTEX_SERVICE_ACCOUNT")
@@ -168,8 +168,8 @@ defmodule Gemini.StreamingIntegrationTest do
                  error_msg == :no_auth_config
       after
         # Restore original state
-        if original_config, do: Application.put_env(:gemini, :auth, original_config)
-        if original_api_key, do: Application.put_env(:gemini, :api_key, original_api_key)
+        if original_config, do: Application.put_env(:gemini_ex, :auth, original_config)
+        if original_api_key, do: Application.put_env(:gemini_ex, :api_key, original_api_key)
         if original_gemini_key, do: System.put_env("GEMINI_API_KEY", original_gemini_key)
         if original_vertex_token, do: System.put_env("VERTEX_ACCESS_TOKEN", original_vertex_token)
 
@@ -188,9 +188,9 @@ defmodule Gemini.StreamingIntegrationTest do
 
     test "starts and tracks stream with mock auth" do
       # Set up mock authentication for this test
-      original_config = Application.get_env(:gemini, :auth)
+      original_config = Application.get_env(:gemini_ex, :auth)
 
-      Application.put_env(:gemini, :auth, %{
+      Application.put_env(:gemini_ex, :auth, %{
         type: :gemini,
         credentials: %{api_key: "test_key_123"}
       })
@@ -219,17 +219,17 @@ defmodule Gemini.StreamingIntegrationTest do
       after
         # Restore original config
         if original_config do
-          Application.put_env(:gemini, :auth, original_config)
+          Application.put_env(:gemini_ex, :auth, original_config)
         else
-          Application.delete_env(:gemini, :auth)
+          Application.delete_env(:gemini_ex, :auth)
         end
       end
     end
 
     test "fails without authentication" do
       # Save original state
-      original_config = Application.get_env(:gemini, :auth)
-      original_api_key = Application.get_env(:gemini, :api_key)
+      original_config = Application.get_env(:gemini_ex, :auth)
+      original_api_key = Application.get_env(:gemini_ex, :api_key)
       original_gemini_key = System.get_env("GEMINI_API_KEY")
       original_vertex_token = System.get_env("VERTEX_ACCESS_TOKEN")
       original_vertex_service = System.get_env("VERTEX_SERVICE_ACCOUNT")
@@ -238,8 +238,8 @@ defmodule Gemini.StreamingIntegrationTest do
       original_google_project = System.get_env("GOOGLE_CLOUD_PROJECT")
 
       # Clear all auth sources
-      Application.delete_env(:gemini, :auth)
-      Application.delete_env(:gemini, :api_key)
+      Application.delete_env(:gemini_ex, :auth)
+      Application.delete_env(:gemini_ex, :api_key)
       System.delete_env("GEMINI_API_KEY")
       System.delete_env("VERTEX_ACCESS_TOKEN")
       System.delete_env("VERTEX_SERVICE_ACCOUNT")
@@ -256,8 +256,8 @@ defmodule Gemini.StreamingIntegrationTest do
                  error_msg == :no_auth_config
       after
         # Restore original state
-        if original_config, do: Application.put_env(:gemini, :auth, original_config)
-        if original_api_key, do: Application.put_env(:gemini, :api_key, original_api_key)
+        if original_config, do: Application.put_env(:gemini_ex, :auth, original_config)
+        if original_api_key, do: Application.put_env(:gemini_ex, :api_key, original_api_key)
         if original_gemini_key, do: System.put_env("GEMINI_API_KEY", original_gemini_key)
         if original_vertex_token, do: System.put_env("VERTEX_ACCESS_TOKEN", original_vertex_token)
 
@@ -276,9 +276,9 @@ defmodule Gemini.StreamingIntegrationTest do
 
     test "manages multiple subscribers with mock auth" do
       # Set up mock authentication
-      original_config = Application.get_env(:gemini, :auth)
+      original_config = Application.get_env(:gemini_ex, :auth)
 
-      Application.put_env(:gemini, :auth, %{
+      Application.put_env(:gemini_ex, :auth, %{
         type: :gemini,
         credentials: %{api_key: "test_key_123"}
       })
@@ -305,16 +305,16 @@ defmodule Gemini.StreamingIntegrationTest do
             UnifiedManager.stop_stream(stream_id)
 
           {:error, reason} ->
-            # Should not be no_auth_config since we set up auth  
+            # Should not be no_auth_config since we set up auth
             # (though it may fail for other reasons like network/API key validity)
             assert reason != :no_auth_config
         end
       after
         # Restore original config
         if original_config do
-          Application.put_env(:gemini, :auth, original_config)
+          Application.put_env(:gemini_ex, :auth, original_config)
         else
-          Application.delete_env(:gemini, :auth)
+          Application.delete_env(:gemini_ex, :auth)
         end
       end
     end
@@ -369,9 +369,9 @@ defmodule Gemini.StreamingIntegrationTest do
     @tag :live_api
     test "handles invalid model names with proper error" do
       # Set up mock authentication
-      original_config = Application.get_env(:gemini, :auth)
+      original_config = Application.get_env(:gemini_ex, :auth)
 
-      Application.put_env(:gemini, :auth, %{
+      Application.put_env(:gemini_ex, :auth, %{
         type: :gemini,
         credentials: %{api_key: "test_key_for_error_test"}
       })
@@ -406,9 +406,9 @@ defmodule Gemini.StreamingIntegrationTest do
       after
         # Restore original config
         if original_config do
-          Application.put_env(:gemini, :auth, original_config)
+          Application.put_env(:gemini_ex, :auth, original_config)
         else
-          Application.delete_env(:gemini, :auth)
+          Application.delete_env(:gemini_ex, :auth)
         end
       end
     end

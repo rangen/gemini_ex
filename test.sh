@@ -111,8 +111,8 @@ defmodule TestAuth do
 
   def save_original_auth do
     %{
-      auth: Application.get_env(:gemini, :auth),
-      api_key: Application.get_env(:gemini, :api_key),
+      auth: Application.get_env(:gemini_ex, :auth),
+      api_key: Application.get_env(:gemini_ex, :api_key),
       gemini_key: System.get_env("GEMINI_API_KEY"),
       vertex_token: System.get_env("VERTEX_ACCESS_TOKEN"),
       vertex_service: System.get_env("VERTEX_SERVICE_ACCOUNT"),

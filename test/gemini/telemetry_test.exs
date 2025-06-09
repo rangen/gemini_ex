@@ -25,7 +25,7 @@ defmodule Gemini.TelemetryTest do
   describe "telemetry events" do
     test "emits request start and stop events" do
       # Configure telemetry
-      Application.put_env(:gemini, :telemetry_enabled, true)
+      Application.put_env(:gemini_ex, :telemetry_enabled, true)
 
       # This would normally make a real request, but we'll just test the telemetry
       # infrastructure is in place
@@ -80,13 +80,13 @@ defmodule Gemini.TelemetryTest do
 
   describe "telemetry configuration" do
     test "telemetry can be disabled" do
-      Application.put_env(:gemini, :telemetry_enabled, false)
+      Application.put_env(:gemini_ex, :telemetry_enabled, false)
       assert Gemini.Config.telemetry_enabled?() == false
 
-      Application.put_env(:gemini, :telemetry_enabled, true)
+      Application.put_env(:gemini_ex, :telemetry_enabled, true)
       assert Gemini.Config.telemetry_enabled?() == true
 
-      Application.delete_env(:gemini, :telemetry_enabled)
+      Application.delete_env(:gemini_ex, :telemetry_enabled)
       # default is true
       assert Gemini.Config.telemetry_enabled?() == true
     end
