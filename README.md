@@ -3,8 +3,8 @@
 [![CI](https://github.com/nshkrdotcom/gemini_ex/actions/workflows/elixir.yaml/badge.svg)](https://github.com/nshkrdotcom/gemini_ex/actions/workflows/elixir.yaml)
 [![Elixir](https://img.shields.io/badge/elixir-1.18.3-purple.svg)](https://elixir-lang.org)
 [![OTP](https://img.shields.io/badge/otp-27.3.3-blue.svg)](https://www.erlang.org)
-[![Hex.pm](https://img.shields.io/hexpm/v/gemini.svg)](https://hex.pm/packages/gemini)
-[![Documentation](https://img.shields.io/badge/docs-hexdocs-purple.svg)](https://hexdocs.pm/gemini)
+[![Hex.pm](https://img.shields.io/hexpm/v/gemini.svg)](https://hex.pm/packages/gemini_ex)
+[![Documentation](https://img.shields.io/badge/docs-hexdocs-purple.svg)](https://hexdocs.pm/gemini_ex)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/nshkrdotcom/gemini_ex/blob/main/LICENSE)
 
 A comprehensive Elixir client for Google's Gemini AI API with dual authentication support, advanced streaming capabilities, type safety, and built-in telemetry.
@@ -135,9 +135,9 @@ config :gemini_ex, :auth,
 
 ## 📚 Documentation
 
-- **[API Reference](https://hexdocs.pm/gemini)** - Complete function documentation
-- **[Architecture Guide](https://hexdocs.pm/gemini/architecture.html)** - System design and components
-- **[Authentication System](https://hexdocs.pm/gemini/authentication_system.html)** - Detailed auth configuration
+- **[API Reference](https://hexdocs.pm/gemini_ex)** - Complete function documentation
+- **[Architecture Guide](https://hexdocs.pm/gemini_ex/architecture.html)** - System design and components
+- **[Authentication System](https://hexdocs.pm/gemini_ex/authentication_system.html)** - Detailed auth configuration
 - **[Examples](https://github.com/nshkrdotcom/gemini_ex/tree/main/examples)** - Working code examples
 
 ## 🏗️ Architecture

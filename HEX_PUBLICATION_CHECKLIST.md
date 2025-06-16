@@ -52,7 +52,7 @@ mix hex.publish package
 ## 🔗 Links
 
 - **GitHub**: https://github.com/nshkrdotcom/gemini_ex
-- **Documentation**: https://hexdocs.pm/gemini
+- **Documentation**: https://hexdocs.pm/gemini_ex
 - **Changelog**: https://github.com/nshkrdotcom/gemini_ex/blob/main/CHANGELOG.md
 
 ## 🎯 Next Steps
