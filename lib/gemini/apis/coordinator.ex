@@ -27,6 +27,8 @@ defmodule Gemini.APIs.Coordinator do
 
       # Start streaming with specific auth
       {:ok, stream_id} = Coordinator.stream_generate_content("Tell me a story", auth: :gemini)
+
+  See `t:Gemini.options/0` in `Gemini` for the canonical list of options.
   """
 
   alias Gemini.Client.HTTP
@@ -44,18 +46,11 @@ defmodule Gemini.APIs.Coordinator do
   @doc """
   Generate content using the specified model and input.
 
+  See `t:Gemini.options/0` for available options.
+
   ## Parameters
   - `input`: String prompt or GenerateContentRequest struct
   - `opts`: Options including model, auth strategy, and generation config
-
-  ## Options
-  - `:model`: Model to use (defaults to "gemini-2.0-flash")
-  - `:auth`: Authentication strategy (`:gemini` or `:vertex_ai`)
-  - `:temperature`: Generation temperature (0.0-1.0)
-  - `:max_output_tokens`: Maximum tokens to generate
-  - `:top_p`: Top-p sampling parameter
-  - `:top_k`: Top-k sampling parameter
-  - `:safety_settings`: List of safety settings
 
   ## Examples
 
@@ -74,7 +69,10 @@ defmodule Gemini.APIs.Coordinator do
       request = %GenerateContentRequest{...}
       {:ok, response} = Coordinator.generate_content(request)
   """
-  @spec generate_content(String.t() | [Content.t()] | GenerateContentRequest.t(), request_opts()) ::
+  @spec generate_content(
+          String.t() | [Content.t()] | GenerateContentRequest.t(),
+          Gemini.options()
+        ) ::
           api_result(GenerateContentResponse.t())
   def generate_content(input, opts \\ []) do
     model = Keyword.get(opts, :model, "gemini-2.0-flash")
@@ -91,8 +89,10 @@ defmodule Gemini.APIs.Coordinator do
   @doc """
   Stream content generation with real-time response chunks.
 
+  See `t:Gemini.options/0` for available options.
+
   ## Parameters
-  - `input`: String prompt or GenerateContentRequest struct  
+  - `input`: String prompt or GenerateContentRequest struct
   - `opts`: Options including model, auth strategy, and generation config
 
   ## Returns
@@ -106,11 +106,11 @@ defmodule Gemini.APIs.Coordinator do
 
       # Handle incoming messages
       receive do
-        {:stream_event, ^stream_id, event} -> 
+        {:stream_event, ^stream_id, event} ->
           IO.inspect(event, label: "Stream Event")
-        {:stream_complete, ^stream_id} -> 
+        {:stream_complete, ^stream_id} ->
           IO.puts("Stream completed")
-        {:stream_error, ^stream_id, stream_error} -> 
+        {:stream_error, ^stream_id, stream_error} ->
           IO.puts("Stream error: \#{inspect(stream_error)}")
       end
 
@@ -128,7 +128,7 @@ defmodule Gemini.APIs.Coordinator do
         max_output_tokens: 1000
       )
   """
-  @spec stream_generate_content(String.t() | GenerateContentRequest.t(), request_opts()) ::
+  @spec stream_generate_content(String.t() | GenerateContentRequest.t(), Gemini.options()) ::
           api_result(String.t())
   def stream_generate_content(input, opts \\ []) do
     model = Keyword.get(opts, :model, "gemini-2.0-flash")
@@ -143,7 +143,7 @@ defmodule Gemini.APIs.Coordinator do
   @doc """
   Subscribe to a streaming content generation.
 
-  ## Parameters  
+  ## Parameters
   - `stream_id`: ID of the stream to subscribe to
   - `subscriber_pid`: Process to receive stream events (defaults to current process)
 
@@ -189,6 +189,8 @@ defmodule Gemini.APIs.Coordinator do
   @doc """
   List available models for the specified authentication strategy.
 
+  See `t:Gemini.options/0` for available options.
+
   ## Parameters
   - `opts`: Options including auth strategy and pagination
 
@@ -212,7 +214,7 @@ defmodule Gemini.APIs.Coordinator do
         page_token: "next_page_token"
       )
   """
-  @spec list_models(request_opts()) :: api_result(ListModelsResponse.t())
+  @spec list_models(Gemini.options()) :: api_result(ListModelsResponse.t())
   def list_models(opts \\ []) do
     path = "models"
 
@@ -226,6 +228,8 @@ defmodule Gemini.APIs.Coordinator do
   @doc """
   Get information about a specific model.
 
+  See `t:Gemini.options/0` for available options.
+
   ## Parameters
   - `model_name`: Name of the model to retrieve
   - `opts`: Options including auth strategy
@@ -235,7 +239,7 @@ defmodule Gemini.APIs.Coordinator do
       {:ok, model} = Coordinator.get_model("gemini-2.0-flash")
       {:ok, model} = Coordinator.get_model("gemini-1.5-pro", auth: :vertex_ai)
   """
-  @spec get_model(String.t(), request_opts()) :: api_result(map())
+  @spec get_model(String.t(), Gemini.options()) :: api_result(map())
   def get_model(model_name, opts \\ []) do
     path = "models/#{model_name}"
 
@@ -253,6 +257,8 @@ defmodule Gemini.APIs.Coordinator do
   @doc """
   Count tokens in the given input.
 
+  See `t:Gemini.options/0` for available options.
+
   ## Parameters
   - `input`: String or GenerateContentRequest to count tokens for
   - `opts`: Options including model and auth strategy
@@ -266,7 +272,7 @@ defmodule Gemini.APIs.Coordinator do
       {:ok, count} = Coordinator.count_tokens("Hello world")
       {:ok, count} = Coordinator.count_tokens("Complex text", model: "gemini-1.5-pro", auth: :vertex_ai)
   """
-  @spec count_tokens(String.t() | GenerateContentRequest.t(), request_opts()) ::
+  @spec count_tokens(String.t() | GenerateContentRequest.t(), Gemini.options()) ::
           api_result(%{total_tokens: integer()})
   def count_tokens(input, opts \\ []) do
     model = Keyword.get(opts, :model, "gemini-2.0-flash")
@@ -376,7 +382,7 @@ defmodule Gemini.APIs.Coordinator do
     }
   end
 
-  # Helper function to format Part structs for API requests  
+  # Helper function to format Part structs for API requests
   defp format_part(%{text: text}) when is_binary(text) do
     %{text: text}
   end
