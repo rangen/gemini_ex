@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.3] - 2025-01-07
+
 ### Fixed
 - **API Response Parsing**: Fixed issue where `usage_metadata` was always nil on successful `Gemini.generate/2` calls ([#3](https://github.com/nshkrdotcom/gemini_ex/issues/3))
   - The Gemini API returns camelCase keys like `"usageMetadata"` which were not being converted to snake_case atoms
@@ -131,5 +133,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Minimal latency overhead
 - Concurrent request processing
 
+[0.0.3]: https://github.com/nshkrdotcom/gemini_ex/releases/tag/v0.0.3
 [0.0.2]: https://github.com/nshkrdotcom/gemini_ex/releases/tag/v0.0.2
 [0.0.1]: https://github.com/nshkrdotcom/gemini_ex/releases/tag/v0.0.1

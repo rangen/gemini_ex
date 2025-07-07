@@ -27,7 +27,7 @@ Add `gemini` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:gemini_ex, "~> 0.0.2"}
+    {:gemini_ex, "~> 0.0.3"}
   ]
 end
 ```
