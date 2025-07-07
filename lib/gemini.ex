@@ -287,18 +287,21 @@ defmodule Gemini do
           {:ok, GenerateContentResponse.t(), map()} | {:error, Error.t()}
   def send_message(chat, message) do
     # Build the full conversation history including the new message
-    contents = 
+    contents =
       chat.history
-      |> Enum.map(fn 
-        %{role: "user", content: text} when is_binary(text) -> 
+      |> Enum.map(fn
+        %{role: "user", content: text} when is_binary(text) ->
           Content.text(text, "user")
+
         %{role: "model", content: %GenerateContentResponse{} = response} ->
           # Extract the model's text from the response
           case extract_text(response) do
             {:ok, text} -> Content.text(text, "model")
             _ -> nil
           end
-        _ -> nil
+
+        _ ->
+          nil
       end)
       |> Enum.reject(&is_nil/1)
       |> Kernel.++([Content.text(message, "user")])
