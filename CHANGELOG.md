@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - The Gemini API returns camelCase keys like `"usageMetadata"` which were not being converted to snake_case atoms
   - Updated `atomize_key` function in coordinator to properly convert camelCase strings to snake_case atoms
   - Now properly populates `usage_metadata` with token count information
+- **Chat Sessions**: Fixed conversation context not being maintained between messages
+  - The `send_message` function was only sending the new message, not the full conversation history
+  - Now builds complete conversation history with proper role assignments before each API call
+  - Ensures AI maintains context and remembers information from previous messages
 
 ## [0.0.2] - 2025-06-09
 
