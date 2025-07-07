@@ -1,6 +1,8 @@
 defmodule Gemini.Generate do
   @moduledoc """
   API for generating content with Gemini models.
+
+  See `t:Gemini.options/0` in `Gemini` for the canonical list of options.
   """
 
   alias Gemini.Client.HTTP
@@ -20,8 +22,22 @@ defmodule Gemini.Generate do
   # Note: SafetySetting and GenerationConfig aliases removed as they're not used directly
   alias Gemini.Error
 
+  @typedoc """
+  Options for chat sessions.
+
+  All options from `t:Gemini.options/0`, plus:
+  - `:history` - Chat history as a list of Content structs
+  """
+  @type chat_options ::
+          Gemini.options()
+          | [
+              history: [Gemini.Types.Content.t()]
+            ]
+
   @doc """
   Generate content using a Gemini model.
+
+  See `t:Gemini.options/0` for available options.
 
   ## Parameters
     - `contents` - List of Content structs or strings
@@ -44,6 +60,8 @@ defmodule Gemini.Generate do
       {:ok, %GenerateContentResponse{...}}
 
   """
+  @spec content(String.t() | [Content.t()], Gemini.options()) ::
+          {:ok, GenerateContentResponse.t()} | {:error, Error.t()}
   def content(contents, opts \\ []) when is_list(contents) or is_binary(contents) do
     model = Keyword.get(opts, :model, Config.default_model())
 
@@ -67,6 +85,8 @@ defmodule Gemini.Generate do
   @doc """
   Generate content with streaming support.
 
+  See `t:Gemini.options/0` for available options.
+
   Returns a stream of partial responses as they become available.
 
   ## Parameters
@@ -79,6 +99,8 @@ defmodule Gemini.Generate do
       {:ok, [%GenerateContentResponse{...}, ...]}
 
   """
+  @spec stream_content(String.t() | [Content.t()], Gemini.options()) ::
+          {:ok, [GenerateContentResponse.t()]} | {:error, Error.t()}
   def stream_content(contents, opts \\ []) when is_list(contents) or is_binary(contents) do
     model = Keyword.get(opts, :model, Config.default_model())
 
@@ -102,6 +124,8 @@ defmodule Gemini.Generate do
   @doc """
   Count tokens in the given content.
 
+  See `t:Gemini.options/0` for available options.
+
   ## Parameters
     - `contents` - List of Content structs or strings
     - `opts` - Options including:
@@ -113,6 +137,8 @@ defmodule Gemini.Generate do
       {:ok, %CountTokensResponse{total_tokens: 3}}
 
   """
+  @spec count_tokens(String.t() | [Content.t()], Gemini.options()) ::
+          {:ok, CountTokensResponse.t()} | {:error, Error.t()}
   def count_tokens(contents, opts \\ []) when is_list(contents) or is_binary(contents) do
     model = Keyword.get(opts, :model, Config.default_model())
 
@@ -137,6 +163,8 @@ defmodule Gemini.Generate do
   @doc """
   Generate content and return only the text from the first candidate.
 
+  See `t:Gemini.options/0` for available options.
+
   This is a convenience function for simple text generation.
 
   ## Examples
@@ -145,6 +173,8 @@ defmodule Gemini.Generate do
       {:ok, "The capital of France is Paris."}
 
   """
+  @spec text(String.t() | [Content.t()], Gemini.options()) ::
+          {:ok, String.t()} | {:error, Error.t()}
   def text(contents, opts \\ []) do
     case content(contents, opts) do
       {:ok,
@@ -167,6 +197,9 @@ defmodule Gemini.Generate do
   @doc """
   Start a chat session for multi-turn conversations.
 
+  All options from `t:Gemini.options/0`, plus:
+  - `:history` - Chat history as a list of Content structs
+
   ## Parameters
     - `opts` - Options including:
       - `:model` - Model name (default: from config)
@@ -182,6 +215,7 @@ defmodule Gemini.Generate do
       {:ok, response, updated_chat}
 
   """
+  @spec chat(Gemini.Generate.chat_options()) :: {:ok, map()}
   def chat(opts \\ []) do
     chat = %{
       model: Keyword.get(opts, :model, Config.default_model()),
@@ -199,6 +233,8 @@ defmodule Gemini.Generate do
   @doc """
   Send a message in a chat session.
 
+  Uses options from the chat session (see `t:Gemini.Generate.chat_options/0`).
+
   ## Parameters
     - `chat` - Chat session from `chat/1`
     - `message` - Message content as string or Content struct
@@ -208,6 +244,8 @@ defmodule Gemini.Generate do
     - `{:error, error}` on failure
 
   """
+  @spec send_message(map(), String.t() | Gemini.Types.Content.t()) ::
+          {:ok, GenerateContentResponse.t(), map()} | {:error, Error.t()}
   def send_message(chat, message) do
     user_content = normalize_content(message)
     contents = chat.history ++ [user_content]

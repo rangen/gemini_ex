@@ -166,6 +166,37 @@ defmodule Gemini do
   alias Gemini.Types.Content
   alias Gemini.Types.Response.GenerateContentResponse
 
+  @typedoc """
+  Options for content generation and related API calls.
+
+  - `:model` - Model name (string, defaults to "gemini-2.0-flash")
+  - `:generation_config` - GenerationConfig struct (`Gemini.Types.GenerationConfig.t()`)
+  - `:safety_settings` - List of SafetySetting structs (`[Gemini.Types.SafetySetting.t()]`)
+  - `:system_instruction` - System instruction as Content struct or string (`Gemini.Types.Content.t() | String.t() | nil`)
+  - `:tools` - List of tool definitions (`[map()]`)
+  - `:tool_config` - Tool configuration (`map() | nil`)
+  - `:api_key` - Override API key (string)
+  - `:auth` - Authentication strategy (`:gemini | :vertex_ai`)
+  - `:temperature` - Generation temperature (float, 0.0-1.0)
+  - `:max_output_tokens` - Maximum tokens to generate (non_neg_integer)
+  - `:top_p` - Top-p sampling parameter (float)
+  - `:top_k` - Top-k sampling parameter (non_neg_integer)
+  """
+  @type options :: [
+          model: String.t(),
+          generation_config: Gemini.Types.GenerationConfig.t() | nil,
+          safety_settings: [Gemini.Types.SafetySetting.t()],
+          system_instruction: Gemini.Types.Content.t() | String.t() | nil,
+          tools: [map()],
+          tool_config: map() | nil,
+          api_key: String.t(),
+          auth: :gemini | :vertex_ai,
+          temperature: float(),
+          max_output_tokens: non_neg_integer(),
+          top_p: float(),
+          top_k: non_neg_integer()
+        ]
+
   @doc """
   Configure authentication for the client.
 
@@ -189,8 +220,10 @@ defmodule Gemini do
 
   @doc """
   Generate content using the configured authentication.
+
+  See `t:Gemini.options/0` for available options.
   """
-  @spec generate(String.t() | [Content.t()], keyword()) ::
+  @spec generate(String.t() | [Content.t()], options()) ::
           {:ok, GenerateContentResponse.t()} | {:error, Error.t()}
   def generate(contents, opts \\ []) do
     Coordinator.generate_content(contents, opts)
@@ -198,8 +231,10 @@ defmodule Gemini do
 
   @doc """
   Generate text content and return only the text.
+
+  See `t:Gemini.options/0` for available options.
   """
-  @spec text(String.t() | [Content.t()], keyword()) :: {:ok, String.t()} | {:error, Error.t()}
+  @spec text(String.t() | [Content.t()], options()) :: {:ok, String.t()} | {:error, Error.t()}
   def text(contents, opts \\ []) do
     case Coordinator.generate_content(contents, opts) do
       {:ok, response} -> Coordinator.extract_text(response)
@@ -209,8 +244,10 @@ defmodule Gemini do
 
   @doc """
   List available models.
+
+  See `t:Gemini.options/0` for available options.
   """
-  @spec list_models(keyword()) :: {:ok, map()} | {:error, Error.t()}
+  @spec list_models(options()) :: {:ok, map()} | {:error, Error.t()}
   def list_models(opts \\ []) do
     Coordinator.list_models(opts)
   end
@@ -225,16 +262,20 @@ defmodule Gemini do
 
   @doc """
   Count tokens in the given content.
+
+  See `t:Gemini.options/0` for available options.
   """
-  @spec count_tokens(String.t() | [Content.t()], keyword()) :: {:ok, map()} | {:error, Error.t()}
+  @spec count_tokens(String.t() | [Content.t()], options()) :: {:ok, map()} | {:error, Error.t()}
   def count_tokens(contents, opts \\ []) do
     Coordinator.count_tokens(contents, opts)
   end
 
   @doc """
   Start a new chat session.
+
+  See `t:Gemini.options/0` for available options.
   """
-  @spec chat(keyword()) :: {:ok, map()}
+  @spec chat(options()) :: {:ok, map()}
   def chat(opts \\ []) do
     {:ok, %{history: [], opts: opts}}
   end
@@ -268,8 +309,10 @@ defmodule Gemini do
 
   @doc """
   Start a managed streaming session.
+
+  See `t:Gemini.options/0` for available options.
   """
-  @spec start_stream(String.t() | [Content.t()], keyword()) ::
+  @spec start_stream(String.t() | [Content.t()], options()) ::
           {:ok, String.t()} | {:error, Error.t()}
   def start_stream(contents, opts \\ []) do
     Coordinator.stream_generate_content(contents, opts)
@@ -338,8 +381,10 @@ defmodule Gemini do
 
   @doc """
   Generate content with streaming response (synchronous collection).
+
+  See `t:Gemini.options/0` for available options.
   """
-  @spec stream_generate(String.t() | [Content.t()], keyword()) ::
+  @spec stream_generate(String.t() | [Content.t()], options()) ::
           {:ok, [map()]} | {:error, Error.t()}
   def stream_generate(contents, opts \\ []) do
     case start_stream(contents, opts) do
