@@ -471,6 +471,13 @@ defmodule Gemini.APIs.Coordinator do
   defp atomize_keys(value), do: value
 
   @spec atomize_key(String.t() | atom()) :: atom()
-  defp atomize_key(key) when is_binary(key), do: String.to_atom(key)
+  defp atomize_key(key) when is_binary(key) do
+    # Convert camelCase to snake_case
+    key
+    |> String.replace(~r/([A-Z])/, "_\\1")
+    |> String.downcase()
+    |> String.trim_leading("_")
+    |> String.to_atom()
+  end
   defp atomize_key(key) when is_atom(key), do: key
 end
