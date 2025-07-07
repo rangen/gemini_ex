@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- **API Response Parsing**: Fixed issue where `usage_metadata` was always nil on successful `Gemini.generate/2` calls ([#3](https://github.com/nshkrdotcom/gemini_ex/issues/3))
+  - The Gemini API returns camelCase keys like `"usageMetadata"` which were not being converted to snake_case atoms
+  - Updated `atomize_key` function in coordinator to properly convert camelCase strings to snake_case atoms
+  - Now properly populates `usage_metadata` with token count information
+
 ## [0.0.2] - 2025-06-09
 
 ### Fixed

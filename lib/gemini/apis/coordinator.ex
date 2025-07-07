@@ -479,5 +479,6 @@ defmodule Gemini.APIs.Coordinator do
     |> String.trim_leading("_")
     |> String.to_atom()
   end
+
   defp atomize_key(key) when is_atom(key), do: key
 end

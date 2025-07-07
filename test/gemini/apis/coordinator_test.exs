@@ -153,7 +153,7 @@ defmodule Gemini.APIs.CoordinatorTest do
 
     test "atomize_keys converts camelCase to snake_case for API responses" do
       # Test for issue #3 - This verifies our camelCase to snake_case conversion
-      
+
       # Test data representing what the API returns
       test_cases = [
         {"usageMetadata", :usage_metadata},
@@ -166,19 +166,20 @@ defmodule Gemini.APIs.CoordinatorTest do
         {"outputTokenLimit", :output_token_limit},
         {"supportedGenerationMethods", :supported_generation_methods}
       ]
-      
+
       # The actual conversion is done by atomize_key in the coordinator
       # We can't test it directly but we can verify the pattern works
       for {camel_case, expected_snake_case} <- test_cases do
         # This is what our fix does
-        converted = camel_case
+        converted =
+          camel_case
           |> String.replace(~r/([A-Z])/, "_\\1")
           |> String.downcase()
           |> String.trim_leading("_")
           |> String.to_atom()
-          
-        assert converted == expected_snake_case, 
-          "Failed to convert #{camel_case} to #{expected_snake_case}, got #{converted}"
+
+        assert converted == expected_snake_case,
+               "Failed to convert #{camel_case} to #{expected_snake_case}, got #{converted}"
       end
     end
   end
