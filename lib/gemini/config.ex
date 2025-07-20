@@ -12,7 +12,32 @@ defmodule Gemini.Config do
           credentials: map()
         }
 
-  @default_model "gemini-2.0-flash"
+  @default_model "gemini-2.0-flash-lite"
+
+  # Model definitions
+  @models %{
+    # Gemini 2.0 models
+    flash_2_0: "gemini-2.0-flash",
+    flash_2_0_001: "gemini-2.0-flash-001",
+    flash_2_0_lite: "gemini-2.0-flash-lite",
+
+    # Gemini 1.5 models  
+    pro_1_5: "gemini-1.5-pro",
+    pro_1_5_001: "gemini-1.5-pro-001",
+    pro_1_5_002: "gemini-1.5-pro-002",
+    flash_1_5: "gemini-1.5-flash",
+    flash_1_5_001: "gemini-1.5-flash-001",
+    flash_1_5_002: "gemini-1.5-flash-002",
+    flash_8b_1_5: "gemini-1.5-flash-8b",
+
+    # Legacy models
+    pro: "gemini-pro",
+
+    # Common aliases
+    default: "gemini-2.0-flash-lite",
+    latest: "gemini-2.0-flash-lite",
+    stable: "gemini-1.5-pro"
+  }
 
   @doc """
   Get configuration based on environment variables and application config.
@@ -163,6 +188,63 @@ defmodule Gemini.Config do
   """
   def default_model do
     Application.get_env(:gemini_ex, :default_model, @default_model)
+  end
+
+  @doc """
+  Get a model name by its key or return the string if it's already a model name.
+
+  ## Examples
+
+      iex> Gemini.Config.get_model(:flash_2_0)
+      "gemini-2.0-flash"
+      
+      iex> Gemini.Config.get_model("gemini-1.5-pro")
+      "gemini-1.5-pro"
+      
+      iex> Gemini.Config.get_model(:default)
+      "gemini-2.0-flash"
+  """
+  @spec get_model(atom() | String.t()) :: String.t()
+  def get_model(model_key) when is_atom(model_key) do
+    case Map.get(@models, model_key) do
+      nil ->
+        raise "Unknown model key: #{model_key}. Available keys: #{inspect(Map.keys(@models))}"
+
+      model_name ->
+        model_name
+    end
+  end
+
+  def get_model(model_name) when is_binary(model_name) do
+    model_name
+  end
+
+  @doc """
+  Get all available model definitions.
+
+  ## Returns
+
+  A map of model keys to model names.
+  """
+  @spec models() :: map()
+  def models do
+    @models
+  end
+
+  @doc """
+  Check if a model key exists.
+
+  ## Examples
+
+      iex> Gemini.Config.has_model?(:flash_2_0)
+      true
+      
+      iex> Gemini.Config.has_model?(:unknown)
+      false
+  """
+  @spec has_model?(atom()) :: boolean()
+  def has_model?(model_key) when is_atom(model_key) do
+    Map.has_key?(@models, model_key)
   end
 
   @doc """

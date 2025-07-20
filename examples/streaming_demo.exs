@@ -1,13 +1,13 @@
-#!/usr/bin/env elixir
-
 # Simple Live Streaming Demo
-# Usage: elixir streaming_demo.exs
-
-Mix.install([
-  {:gemini, path: "."}
-])
+# Usage: mix run examples/streaming_demo.exs
 
 defmodule StreamingDemo do
+  defp mask_api_key(key) when is_binary(key) and byte_size(key) > 2 do
+    first_two = String.slice(key, 0, 2)
+    "#{first_two}***"
+  end
+  defp mask_api_key(_), do: "***"
+
   def run do
     IO.puts("🌊 Gemini Streaming Demo")
     IO.puts("========================")
@@ -26,7 +26,7 @@ defmodule StreamingDemo do
   defp configure_auth do
     cond do
       vertex_key = System.get_env("VERTEX_JSON_FILE") ->
-        IO.puts("🔑 Using Vertex AI authentication")
+        IO.puts("🔑 Using Vertex AI authentication (file: #{vertex_key})")
         Gemini.configure(:vertex_ai, %{
           service_account_key: vertex_key,
           project_id: System.get_env("VERTEX_PROJECT_ID"),
@@ -35,7 +35,7 @@ defmodule StreamingDemo do
         :ok
         
       api_key = System.get_env("GEMINI_API_KEY") ->
-        IO.puts("🔑 Using Gemini API authentication")
+        IO.puts("🔑 Using Gemini API authentication (key: #{mask_api_key(api_key)})")
         Gemini.configure(:gemini, %{api_key: api_key})
         :ok
         

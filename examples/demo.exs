@@ -1,12 +1,6 @@
-#!/usr/bin/env elixir
-
 # Demo script for the Gemini Elixir client
-# Run with: elixir demo.exs
+# Run with: mix run examples/demo.exs
 # Requires GEMINI_API_KEY environment variable
-
-Mix.install([
-  {:gemini, path: "."}
-])
 
 defmodule GeminiDemo do
   alias Gemini.Types.GenerationConfig
@@ -19,6 +13,12 @@ defmodule GeminiDemo do
     end
   end
 
+  defp mask_api_key(key) when is_binary(key) and byte_size(key) > 2 do
+    first_two = String.slice(key, 0, 2)
+    "#{first_two}***"
+  end
+  defp mask_api_key(_key), do: "***"
+
   def run do
     IO.puts("🤖 Gemini Elixir Client Demo")
     IO.puts("=" <> String.duplicate("=", 50))
@@ -29,8 +29,8 @@ defmodule GeminiDemo do
         IO.puts("❌ No API key found. Please set GEMINI_API_KEY environment variable.")
         System.halt(1)
 
-      _key ->
-        IO.puts("✅ API key configured")
+      key ->
+        IO.puts("✅ API key configured: #{mask_api_key(key)}")
     end
 
     demo_models()
@@ -67,7 +67,7 @@ defmodule GeminiDemo do
     end
 
     IO.puts("\nChecking specific model...")
-    case Gemini.get_model("gemini-2.0-flash") do
+    case Gemini.get_model(Gemini.Config.get_model(:flash_2_0_lite)) do
       {:ok, model} ->
         display_name = Map.get(model, "displayName", "Unknown")
         description = Map.get(model, "description", "No description")

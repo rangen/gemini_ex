@@ -56,7 +56,7 @@ defmodule Gemini do
 
   # With options
   {:ok, response} = Gemini.generate("Explain quantum computing", [
-    model: "gemini-1.5-pro",
+    model: Gemini.Config.get_model(:flash_2_0_lite),
     temperature: 0.7,
     max_output_tokens: 1000
   ])
@@ -151,10 +151,10 @@ defmodule Gemini do
   {:ok, models} = Gemini.list_models()
 
   # Get model details
-  {:ok, model_info} = Gemini.get_model("gemini-1.5-pro")
+  {:ok, model_info} = Gemini.get_model(Gemini.Config.get_model(:flash_2_0_lite))
 
   # Count tokens
-  {:ok, token_count} = Gemini.count_tokens("Your text", model: "gemini-1.5-pro")
+  {:ok, token_count} = Gemini.count_tokens("Your text", model: Gemini.Config.get_model(:flash_2_0_lite))
   ```
 
   This module provides backward-compatible access to the Gemini API while routing
@@ -169,7 +169,7 @@ defmodule Gemini do
   @typedoc """
   Options for content generation and related API calls.
 
-  - `:model` - Model name (string, defaults to "gemini-2.0-flash")
+  - `:model` - Model name (string, defaults to configured default model)
   - `:generation_config` - GenerationConfig struct (`Gemini.Types.GenerationConfig.t()`)
   - `:safety_settings` - List of SafetySetting structs (`[Gemini.Types.SafetySetting.t()]`)
   - `:system_instruction` - System instruction as Content struct or string (`Gemini.Types.Content.t() | String.t() | nil`)

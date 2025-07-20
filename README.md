@@ -27,7 +27,7 @@ Add `gemini` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:gemini_ex, "~> 0.0.3"}
+    {:gemini_ex, "~> 0.1.0"}
   ]
 end
 ```
@@ -61,7 +61,7 @@ IO.puts(text)
 
 # With options
 {:ok, response} = Gemini.generate("Explain quantum computing", [
-  model: "gemini-1.5-pro",
+  model: "gemini-2.0-flash-lite",
   temperature: 0.7,
   max_output_tokens: 1000
 ])
@@ -88,7 +88,7 @@ Gemini.Streaming.stop_stream(stream_id)
 ```elixir
 # Create a chat session
 {:ok, session} = Gemini.create_chat_session([
-  model: "gemini-1.5-pro",
+  model: "gemini-2.0-flash-lite",
   system_instruction: "You are a helpful programming assistant."
 ])
 
@@ -99,6 +99,153 @@ Gemini.Streaming.stop_stream(stream_id)
 # Get conversation history
 history = Gemini.get_conversation_history(session)
 ```
+
+## 🎯 Examples
+
+The repository includes comprehensive examples demonstrating all library features. All examples are ready to run and include proper error handling.
+
+### Running Examples
+
+All examples use the same execution method:
+
+```bash
+mix run examples/[example_name].exs
+```
+
+### Available Examples
+
+#### 1. **`demo.exs`** - Comprehensive Feature Showcase
+**The main library demonstration covering all core features.**
+
+```bash
+mix run examples/demo.exs
+```
+
+**Features demonstrated:**
+- Model listing and information retrieval
+- Simple text generation with various prompts
+- Configured generation (creative vs precise modes)
+- Multi-turn chat sessions with context
+- Token counting for different text lengths
+
+**Requirements:** `GEMINI_API_KEY` environment variable
+
+---
+
+#### 2. **`streaming_demo.exs`** - Real-time Streaming
+**Live demonstration of Server-Sent Events streaming with progressive text delivery.**
+
+```bash
+mix run examples/streaming_demo.exs
+```
+
+**Features demonstrated:**
+- Real-time progressive text streaming
+- Stream subscription and event handling
+- Authentication detection (Gemini API or Vertex AI)
+- Stream status monitoring
+
+**Requirements:** `GEMINI_API_KEY` or Vertex AI credentials
+
+---
+
+#### 3. **`demo_unified.exs`** - Multi-Auth Architecture
+**Showcases the unified architecture supporting multiple authentication methods.**
+
+```bash
+mix run examples/demo_unified.exs
+```
+
+**Features demonstrated:**
+- Configuration system and auth detection
+- Authentication strategy switching
+- Streaming manager capabilities
+- Backward compatibility verification
+
+**Requirements:** None (works with or without credentials)
+
+---
+
+#### 4. **`multi_auth_demo.exs`** - Concurrent Authentication
+**Demonstrates concurrent usage of multiple authentication strategies.**
+
+```bash
+mix run examples/multi_auth_demo.exs
+```
+
+**Features demonstrated:**
+- Concurrent Gemini API and Vertex AI requests
+- Authentication failure handling
+- Per-request auth strategy selection
+- Error handling for invalid credentials
+
+**Requirements:** `GEMINI_API_KEY` recommended (demonstrates Vertex AI auth failure)
+
+---
+
+#### 5. **`telemetry_showcase.exs`** - Comprehensive Telemetry System
+**Complete demonstration of the built-in telemetry and observability features.**
+
+```bash
+mix run examples/telemetry_showcase.exs
+```
+
+**Features demonstrated:**
+- Real-time telemetry event monitoring
+- 7 event types: request start/stop/exception, stream start/chunk/stop/exception
+- Telemetry helper functions (stream IDs, content classification, metadata)
+- Live performance measurement and analysis
+- Configuration management for telemetry
+
+**Requirements:** `GEMINI_API_KEY` for live telemetry (works without for utilities demo)
+
+---
+
+#### 6. **`live_api_test.exs`** - API Testing and Validation
+**Comprehensive testing utility for validating both authentication methods.**
+
+```bash
+mix run examples/live_api_test.exs
+```
+
+**Features demonstrated:**
+- Full API testing suite for both auth methods
+- Configuration detection and validation
+- Model operations (listing, details, existence checks)
+- Streaming functionality testing
+- Performance monitoring
+
+**Requirements:** `GEMINI_API_KEY` and/or Vertex AI credentials
+
+### Example Output
+
+Each example provides detailed output with:
+- ✅ Success indicators for working features
+- ❌ Error messages with clear explanations
+- 📊 Performance metrics and timing information
+- 🔧 Configuration details and detected settings
+- 📡 Live telemetry events (in telemetry showcase)
+
+### Setting Up Authentication
+
+For the examples to work with live API calls, set up authentication:
+
+```bash
+# For Gemini API (recommended for examples)
+export GEMINI_API_KEY="your_gemini_api_key"
+
+# For Vertex AI (optional, for multi-auth demos)
+export VERTEX_JSON_FILE="/path/to/service-account.json"
+export VERTEX_PROJECT_ID="your-gcp-project-id"
+```
+
+### Example Development Pattern
+
+The examples follow a consistent pattern:
+- **Self-contained**: Each example runs independently
+- **Well-documented**: Clear inline comments and descriptions
+- **Error-resilient**: Graceful handling of missing credentials
+- **Informative output**: Detailed logging of operations and results
 
 ## 🔐 Authentication
 
@@ -159,10 +306,10 @@ The library features a modular, layered architecture:
 {:ok, models} = Gemini.list_models()
 
 # Get model details
-{:ok, model_info} = Gemini.get_model("gemini-1.5-pro")
+{:ok, model_info} = Gemini.get_model("gemini-2.0-flash-lite")
 
 # Count tokens
-{:ok, token_count} = Gemini.count_tokens("Your text here", model: "gemini-1.5-pro")
+{:ok, token_count} = Gemini.count_tokens("Your text here", model: "gemini-2.0-flash-lite")
 ```
 
 ### Multimodal Content

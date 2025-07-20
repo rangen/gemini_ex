@@ -1,31 +1,7 @@
-#!/usr/bin/env elixir
-
 # Live API Tests for Gemini Elixir Library
 # Tests both Gemini API and Vertex AI authentication, plus streaming
+# Usage: mix run examples/live_api_test.exs
 
-# Change to the project directory
-File.cd!("/home/home/p/g/n/gemini_ex")
-
-# Start applications we need
-Application.ensure_all_started(:inets)
-Application.ensure_all_started(:ssl)
-Application.ensure_all_started(:crypto)
-Application.ensure_all_started(:jason)
-
-# Add the lib directory to the code path and load compiled modules
-Code.prepend_path("_build/dev/lib/gemini/ebin")
-Code.prepend_path("_build/dev/lib/typed_struct/ebin")
-Code.prepend_path("_build/dev/lib/joken/ebin")
-Code.prepend_path("_build/dev/lib/jose/ebin")
-Code.prepend_path("_build/dev/lib/req/ebin")
-
-# Load all Gemini modules
-for beam_file <- Path.wildcard("_build/dev/lib/gemini/ebin/*.beam") do
-  module_name = Path.basename(beam_file, ".beam") |> String.to_atom()
-  Code.ensure_loaded(module_name)
-end
-
-# Required modules
 require Logger
 
 defmodule LiveAPITest do
@@ -74,7 +50,7 @@ defmodule LiveAPITest do
     api_key = System.get_env("GEMINI_API_KEY")
     if api_key do
       Gemini.configure(:gemini, %{api_key: api_key})
-      IO.puts("Configured Gemini API with key: #{String.slice(api_key, 0, 10)}...")
+      IO.puts("Configured Gemini API with key: #{String.slice(api_key, 0, 8)}***")
 
       # Test simple text generation
       test_simple_generation("Gemini API")
@@ -184,9 +160,6 @@ defmodule LiveAPITest do
         
       {:ok, false} ->
         IO.puts("  ❌ Model #{model_name} does not exist")
-        
-      {:error, error} ->
-        IO.puts("  ❌ Model existence check failed: #{inspect(error)}")
     end
   end
 
@@ -270,7 +243,14 @@ defmodule LiveAPITest do
   defp collect_stream_events(stream_id, event_count, timeout) do
     receive do
       {:stream_event, ^stream_id, event} ->
-        IO.puts("  📦 Stream event #{event_count + 1}: #{inspect(Map.keys(event))}")
+        # Show actual content instead of just keys
+        content = case event do
+          %{data: %{"candidates" => [%{"content" => %{"parts" => [%{"text" => text}]}}]}} -> text
+          %{data: data} -> "Data: #{inspect(data)}"
+          %{error: error} -> "Error: #{inspect(error)}"
+          _ -> "Event: #{inspect(event)}"
+        end
+        IO.puts("  📦 Stream event #{event_count + 1}: #{String.slice(content, 0, 100)}#{if String.length(content) > 100, do: "...", else: ""}")
         collect_stream_events(stream_id, event_count + 1, timeout)
         
       {:stream_complete, ^stream_id} ->

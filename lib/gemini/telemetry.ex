@@ -190,10 +190,10 @@ defmodule Gemini.Telemetry do
       "gemini-pro"
 
       iex> Gemini.Telemetry.extract_model([])
-      "gemini-2.0-flash"  # default model
+      Gemini.Config.get_model(:default)  # default model
 
       iex> Gemini.Telemetry.extract_model("not a keyword list")
-      "gemini-2.0-flash"  # fallback to default
+      Gemini.Config.get_model(:default)  # fallback to default
   """
   @spec extract_model(keyword() | term()) :: binary()
   def extract_model(opts) when is_list(opts) do

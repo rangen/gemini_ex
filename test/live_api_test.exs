@@ -11,6 +11,13 @@ defmodule LiveAPITest do
 
   require Logger
 
+  defp mask_api_key(key) when is_binary(key) and byte_size(key) > 2 do
+    first_two = String.slice(key, 0, 2)
+    "#{first_two}***"
+  end
+
+  defp mask_api_key(_), do: "***"
+
   setup_all do
     # Start the application
     Application.ensure_all_started(:gemini)
@@ -44,7 +51,7 @@ defmodule LiveAPITest do
 
       if api_key do
         Gemini.configure(:gemini, %{api_key: api_key})
-        IO.puts("Configured Gemini API with key: #{String.slice(api_key, 0, 10)}...")
+        IO.puts("Configured Gemini API with key: #{mask_api_key(api_key)}")
 
         # Test simple text generation
         IO.puts("\n  📝 Testing simple text generation with Gemini API")
@@ -200,7 +207,7 @@ defmodule LiveAPITest do
         IO.puts("\n  📋 Testing Vertex AI model operations")
 
         # For Vertex AI, we test specific model existence
-        model_name = "gemini-2.0-flash"
+        model_name = Gemini.Config.get_model(:flash_2_0_lite)
 
         case Gemini.model_exists?(model_name) do
           {:ok, true} ->
@@ -257,7 +264,7 @@ defmodule LiveAPITest do
             IO.puts("  📝 Streamed text: #{String.slice(all_text, 0, 200)}...")
 
             # Streaming might return empty responses sometimes, so let's be more forgiving
-            if length(responses) == 0 do
+            if Enum.empty?(responses) do
               IO.puts(
                 "  ⚠️  No stream responses received (API might not support streaming for this endpoint)"
               )

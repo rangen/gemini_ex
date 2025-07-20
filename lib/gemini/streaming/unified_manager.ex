@@ -79,13 +79,13 @@ defmodule Gemini.Streaming.UnifiedManager do
 
       # New API with Gemini auth
       {:ok, stream_id} = UnifiedManager.start_stream(
-        "gemini-2.0-flash",
+        Gemini.Config.get_model(:flash_2_0_lite),
         %{contents: [%{parts: [%{text: "Hello"}]}]},
         auth: :gemini
       )
 
       # Legacy API for ManagerV2 compatibility
-      {:ok, stream_id} = UnifiedManager.start_stream("Hello", [model: "gemini-2.0-flash"], self())
+      {:ok, stream_id} = UnifiedManager.start_stream("Hello", [model: Gemini.Config.get_model(:flash_2_0_lite)], self())
   """
   def start_stream(model, request_body, opts \\ [])
 
@@ -99,7 +99,7 @@ defmodule Gemini.Streaming.UnifiedManager do
   def start_stream(contents, opts, subscriber_pid)
       when is_list(opts) and is_pid(subscriber_pid) do
     # Convert to the new API format
-    model = Keyword.get(opts, :model, "gemini-2.0-flash")
+    model = Keyword.get(opts, :model, Gemini.Config.get_model(:default))
 
     # Build request body from contents
     request_body =
@@ -552,41 +552,42 @@ defmodule Gemini.Streaming.UnifiedManager do
           {:ok, String.t(), [{String.t(), String.t()}]} | {:error, term()}
   defp get_streaming_url_and_headers(stream_state, auth_strategy, auth_headers) do
     # Get credentials for URL building (we need to get them again for the URL builder)
-    with {:ok, credentials} <-
-           MultiAuthCoordinator.get_credentials(auth_strategy, stream_state.config) do
-      # Build the base URL using the auth strategy
-      base_url =
-        case auth_strategy do
-          :gemini ->
-            "https://generativelanguage.googleapis.com"
+    case MultiAuthCoordinator.get_credentials(auth_strategy, stream_state.config) do
+      {:ok, credentials} ->
+        # Build the base URL using the auth strategy
+        base_url =
+          case auth_strategy do
+            :gemini ->
+              "https://generativelanguage.googleapis.com"
 
-          :vertex_ai ->
-            project_id = Map.get(credentials, :project_id)
-            location = Map.get(credentials, :location, "us-central1")
+            :vertex_ai ->
+              project_id = Map.get(credentials, :project_id)
+              location = Map.get(credentials, :location, "us-central1")
 
-            "https://#{location}-aiplatform.googleapis.com/v1/projects/#{project_id}/locations/#{location}/publishers/google"
-        end
+              "https://#{location}-aiplatform.googleapis.com/v1/projects/#{project_id}/locations/#{location}/publishers/google"
+          end
 
-      # Build the streaming path
-      path =
-        case auth_strategy do
-          :gemini -> "/v1beta/models/#{stream_state.model}:streamGenerateContent"
-          :vertex_ai -> "/models/#{stream_state.model}:streamGenerateContent"
-        end
+        # Build the streaming path
+        path =
+          case auth_strategy do
+            :gemini -> "/v1beta/models/#{stream_state.model}:streamGenerateContent"
+            :vertex_ai -> "/models/#{stream_state.model}:streamGenerateContent"
+          end
 
-      url = base_url <> path
+        url = base_url <> path
 
-      # Ensure content-type header is present
-      final_headers =
-        if List.keyfind(auth_headers, "Content-Type", 0) do
-          auth_headers
-        else
-          [{"Content-Type", "application/json"} | auth_headers]
-        end
+        # Ensure content-type header is present
+        final_headers =
+          if List.keyfind(auth_headers, "Content-Type", 0) do
+            auth_headers
+          else
+            [{"Content-Type", "application/json"} | auth_headers]
+          end
 
-      {:ok, url, final_headers}
-    else
-      {:error, reason} -> {:error, reason}
+        {:ok, url, final_headers}
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 

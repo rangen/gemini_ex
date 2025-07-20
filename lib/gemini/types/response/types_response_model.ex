@@ -237,8 +237,8 @@ defmodule Gemini.Types.Response.Model do
 
   Heuristic based on name patterns (no version suffix, "latest" in name).
   """
-  @spec is_latest_version?(t()) :: boolean()
-  def is_latest_version?(%__MODULE__{name: name}) do
+  @spec latest_version?(t()) :: boolean()
+  def latest_version?(%__MODULE__{name: name}) do
     base_name = String.replace_prefix(name, "models/", "")
 
     # Check for version patterns that suggest it's NOT the latest

@@ -60,7 +60,7 @@ defmodule Gemini.APIs.Coordinator do
       # With specific model and auth
       {:ok, response} = Coordinator.generate_content(
         "Explain quantum computing",
-        model: "gemini-2.0-flash",
+        model: Gemini.Config.get_model(:flash_2_0_lite),
         auth: :vertex_ai,
         temperature: 0.7
       )
@@ -75,7 +75,7 @@ defmodule Gemini.APIs.Coordinator do
         ) ::
           api_result(GenerateContentResponse.t())
   def generate_content(input, opts \\ []) do
-    model = Keyword.get(opts, :model, "gemini-2.0-flash")
+    model = Keyword.get(opts, :model, Gemini.Config.get_model(:default))
     path = "models/#{model}:generateContent"
 
     with {:ok, request} <- build_generate_request(input, opts),
@@ -122,7 +122,7 @@ defmodule Gemini.APIs.Coordinator do
       # With specific configuration
       {:ok, stream_id} = Coordinator.stream_generate_content(
         "Explain machine learning",
-        model: "gemini-2.0-flash",
+        model: Gemini.Config.get_model(:flash_2_0_lite),
         auth: :gemini,
         temperature: 0.8,
         max_output_tokens: 1000
@@ -131,7 +131,7 @@ defmodule Gemini.APIs.Coordinator do
   @spec stream_generate_content(String.t() | GenerateContentRequest.t(), Gemini.options()) ::
           api_result(String.t())
   def stream_generate_content(input, opts \\ []) do
-    model = Keyword.get(opts, :model, "gemini-2.0-flash")
+    model = Keyword.get(opts, :model, Gemini.Config.get_model(:default))
 
     with {:ok, request_body} <- build_generate_request(input, opts) do
       UnifiedManager.start_stream(model, request_body, opts)
@@ -236,19 +236,21 @@ defmodule Gemini.APIs.Coordinator do
 
   ## Examples
 
-      {:ok, model} = Coordinator.get_model("gemini-2.0-flash")
+      {:ok, model} = Coordinator.get_model(Gemini.Config.get_model(:flash_2_0_lite))
       {:ok, model} = Coordinator.get_model("gemini-1.5-pro", auth: :vertex_ai)
   """
   @spec get_model(String.t(), Gemini.options()) :: api_result(map())
   def get_model(model_name, opts \\ []) do
     path = "models/#{model_name}"
 
-    with {:ok, response} <- HTTP.get(path, opts) do
-      # Normalize response to use atom keys for common fields
-      normalized_response = normalize_model_response(response)
-      {:ok, normalized_response}
-    else
-      {:error, reason} -> {:error, reason}
+    case HTTP.get(path, opts) do
+      {:ok, response} ->
+        # Normalize response to use atom keys for common fields
+        normalized_response = normalize_model_response(response)
+        {:ok, normalized_response}
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 
@@ -264,7 +266,7 @@ defmodule Gemini.APIs.Coordinator do
   - `opts`: Options including model and auth strategy
 
   ## Options
-  - `:model`: Model to use for token counting (defaults to "gemini-2.0-flash")
+  - `:model`: Model to use for token counting (defaults to configured default model)
   - `:auth`: Authentication strategy (`:gemini` or `:vertex_ai`)
 
   ## Examples
@@ -275,7 +277,7 @@ defmodule Gemini.APIs.Coordinator do
   @spec count_tokens(String.t() | GenerateContentRequest.t(), Gemini.options()) ::
           api_result(%{total_tokens: integer()})
   def count_tokens(input, opts \\ []) do
-    model = Keyword.get(opts, :model, "gemini-2.0-flash")
+    model = Keyword.get(opts, :model, Gemini.Config.get_model(:default))
     path = "models/#{model}:countTokens"
 
     with {:ok, request} <- build_count_tokens_request(input, opts),

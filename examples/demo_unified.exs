@@ -1,14 +1,17 @@
-#!/usr/bin/env elixir
-
-Mix.install([
-  {:gemini, path: "."}
-])
+# Unified Architecture Demo
+# Usage: mix run examples/demo_unified.exs
 
 defmodule UnifiedArchitectureDemo do
   @moduledoc """
   Demonstration of the unified Gemini architecture supporting both
   Gemini API and Vertex AI authentication methods.
   """
+
+  defp mask_api_key(key) when is_binary(key) and byte_size(key) > 2 do
+    first_two = String.slice(key, 0, 2)
+    "#{first_two}***"
+  end
+  defp mask_api_key(_), do: "***"
 
   def run do
     IO.puts("🚀 Gemini Unified Architecture Demo")
@@ -36,9 +39,10 @@ defmodule UnifiedArchitectureDemo do
     IO.puts("Default config: #{inspect(config.auth_type)}")
 
     # Simulated Gemini environment
-    System.put_env("GEMINI_API_KEY", "demo-gemini-key")
+    demo_key = "demo-gemini-key"
+    System.put_env("GEMINI_API_KEY", demo_key)
     config = Gemini.Config.get()
-    IO.puts("With GEMINI_API_KEY: #{inspect(config.auth_type)}")
+    IO.puts("With GEMINI_API_KEY (#{mask_api_key(demo_key)}): #{inspect(config.auth_type)}")
 
     # Simulated Vertex environment
     System.delete_env("GEMINI_API_KEY")
@@ -48,8 +52,9 @@ defmodule UnifiedArchitectureDemo do
     IO.puts("With Vertex env vars: #{inspect(config.auth_type)}")
 
     # Override configuration
-    config = Gemini.Config.get(auth_type: :gemini, api_key: "override-key")
-    IO.puts("With override: #{inspect(config.auth_type)}")
+    override_key = "override-key"
+    config = Gemini.Config.get(auth_type: :gemini, api_key: override_key)
+    IO.puts("With override (#{mask_api_key(override_key)}): #{inspect(config.auth_type)}")
   end
 
   defp demo_authentication_strategies do
@@ -57,13 +62,14 @@ defmodule UnifiedArchitectureDemo do
     IO.puts("-" |> String.duplicate(30))
 
     # Gemini strategy
-    gemini_config = %{api_key: "demo-key"}
+    demo_key = "demo-key"
+    gemini_config = %{api_key: demo_key}
     strategy = Gemini.Auth.strategy(:gemini)
     IO.puts("Gemini strategy: #{inspect(strategy)}")
 
     case Gemini.Auth.authenticate(strategy, gemini_config) do
       {:ok, headers} ->
-        IO.puts("Gemini auth headers: #{inspect(headers)}")
+        IO.puts("Gemini auth headers (key #{mask_api_key(demo_key)}): #{inspect(headers)}")
       {:error, error} ->
         IO.puts("Gemini auth error: #{error}")
     end
@@ -107,7 +113,7 @@ defmodule UnifiedArchitectureDemo do
 
     # Demonstrate streaming functionality using the new unified coordinator
     contents = "Tell me about artificial intelligence"
-    opts = [model: "gemini-2.0-flash"]
+    opts = [model: Gemini.Config.get_model(:flash_2_0_lite)]
 
     case Gemini.APIs.Coordinator.stream_generate_content(contents, opts) do
       {:ok, stream_id} ->

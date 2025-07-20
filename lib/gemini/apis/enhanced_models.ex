@@ -510,7 +510,7 @@ defmodule Gemini.APIs.Models do
           Model.model_family(model) == value
 
         :latest_version ->
-          (value and Model.is_latest_version?(model)) or not value
+          (value and Model.latest_version?(model)) or not value
 
         _ ->
           true
@@ -569,7 +569,7 @@ defmodule Gemini.APIs.Models do
       supports_token_counting: Enum.count(models, &Model.supports_token_counting?/1),
       supports_embeddings: Enum.count(models, &Model.supports_embeddings?/1),
       production_ready: Enum.count(models, &Model.production_ready?/1),
-      latest_versions: Enum.count(models, &Model.is_latest_version?/1)
+      latest_versions: Enum.count(models, &Model.latest_version?/1)
     }
   end
 
