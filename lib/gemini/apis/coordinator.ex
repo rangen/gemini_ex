@@ -79,6 +79,9 @@ defmodule Gemini.APIs.Coordinator do
     path = "models/#{model}:generateContent"
 
     with {:ok, request} <- build_generate_request(input, opts),
+         _ <- IO.inspect(request, label: "REQUEST"),
+         _ <- IO.inspect(path, label: "PATH"),
+         _ <- IO.inspect(opts, label: "OPTS"),
          {:ok, response} <- HTTP.post(path, request, opts) do
       parse_generate_response(response)
     else
